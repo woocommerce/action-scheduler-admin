@@ -94,7 +94,7 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 			[
 				[
 					'methods'  => WP_REST_Server::READABLE,
-					'callback' => array( self::$instance, 'get_actions' ),
+					'callback' => [ self::$instance, 'get_actions' ],
 				],
 			]
 		);
@@ -135,15 +135,23 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 			// Display schedule date in more human friendly WP configured time zone.
 			$next = $action->get_schedule()->next();
 			$next->setTimezone( $timezone );
-			$schedule    = new ActionScheduler_SimpleSchedule( $next );
+			$schedule         = new ActionScheduler_SimpleSchedule( $next );
+			$schedule_display = $this->get_schedule_display( $schedule );
+			$parameters       = [];
+
+			foreach ( $action->get_args() as $key => $value ) {
+				$parameters[] = sprintf( '%s => %s', $key, $value );
+			}
 
 			$action_data = [
-				'id'         => $action_id,
-				'hook'       => $action->get_hook(),
-				'group'      => $action->get_group(),
-				'scheduled'  => $this->get_schedule_display_string( $schedule ),
-				'arguments'  => $action->get_args(),
-				'recurrence' => $this->get_recurrence( $action ),
+				'id'             => $action_id,
+				'hook'           => $action->get_hook(),
+				'group'          => $action->get_group(),
+				'timestamp'      => $schedule_display['timestamp'],
+				'scheduled'      => $schedule_display['date'],
+				'schedule_delta' => $schedule_display['delta'],
+				'parameters'     => $parameters,
+				'recurrence'     => $this->get_recurrence( $action ),
 			];
 
 			$key          = ( ! empty( $args[ 'orderby' ] ) ? $action_data[ $args[ 'orderby' ] ] . '_' : '' ) . $next->getTimestamp();
@@ -176,7 +184,7 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 	private static function human_interval( $interval, $periods_to_include = 2 ) {
 
 		if ( $interval <= 0 ) {
-			return __( 'Now!', 'action-scheduler' );
+			return __( 'Now!', 'action-scheduler-admin' );
 		}
 
 		$output = '';
@@ -209,42 +217,40 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 		$recurrence = $action->get_schedule();
 		if ( $recurrence->is_recurring() ) {
 			if ( method_exists( $recurrence, 'interval_in_seconds' ) ) {
-				return sprintf( __( 'Every %s', 'action-scheduler' ), self::human_interval( $recurrence->interval_in_seconds() ) );
+				return sprintf( __( 'Every %s', 'action-scheduler-admin' ), self::human_interval( $recurrence->interval_in_seconds() ) );
 			}
 
 			if ( method_exists( $recurrence, 'get_recurrence' ) ) {
-				return sprintf( __( 'Cron %s', 'action-scheduler' ), $recurrence->get_recurrence() );
+				return sprintf( __( 'Cron %s', 'action-scheduler-admin' ), $recurrence->get_recurrence() );
 			}
 		}
 
-		return __( 'Non-repeating', 'action-scheduler' );
+		return __( 'Non-repeating', 'action-scheduler-admin' );
 	}
 
 	/**
 	 * Get the scheduled date in a human friendly format.
 	 *
 	 * @param ActionScheduler_Schedule $schedule
-	 * @return string
+	 * @return array
 	 */
-	protected function get_schedule_display_string( ActionScheduler_Schedule $schedule ) {
+	protected function get_schedule_display( ActionScheduler_Schedule $schedule ) {
 
-		$schedule_display_string = '';
+		$schedule_display = [];
 
 		if ( ! $schedule->next() ) {
-			return $schedule_display_string;
+			return $schedule_display;
 		}
 
-		$next_timestamp = $schedule->next()->getTimestamp();
+		$schedule_display['timestamp'] = $schedule->next()->getTimestamp();
+		$schedule_display['date']      = $schedule->next()->format( 'Y-m-d H:i:s O' );
 
-		$schedule_display_string .= $schedule->next()->format( 'Y-m-d H:i:s O' );
-		$schedule_display_string .= '<br/>';
-
-		if ( gmdate( 'U' ) > $next_timestamp ) {
-			$schedule_display_string .= sprintf( __( ' (%s ago)', 'action-scheduler' ), self::human_interval( gmdate( 'U' ) - $next_timestamp ) );
+		if ( gmdate( 'U' ) > $schedule_display['timestamp'] ) {
+			$schedule_display['delta'] = sprintf( __( '(%s ago)', 'action-scheduler-admin' ), self::human_interval( gmdate( 'U' ) - $schedule_display['timestamp'] ) );
 		} else {
-			$schedule_display_string .= sprintf( __( ' (%s)', 'action-scheduler' ), self::human_interval( $next_timestamp - gmdate( 'U' ) ) );
+			$schedule_display['delta'] = sprintf( __( '(%s)', 'action-scheduler-admin' ), self::human_interval( $schedule_display['timestamp'] - gmdate( 'U' ) ) );
 		}
 
-		return $schedule_display_string;
+		return $schedule_display;
 	}
 }

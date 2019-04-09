@@ -3,14 +3,14 @@
 Plugin Name: Action Scheduler Admin
 Plugin URI: https://github.com/Prospress/action-scheduler-admin
 Version: 0.1
-Author: Ron Rennick, Timmy Crawford
-Author URI: http://prospress.com/
+Author: Prospress
+Author URI: https://prospress.com/
 Description: Scheduled Actions screen for the WooCommerce Admin Dashboard.
 
 Text Domain: action-scheduler-admin
 
 License: GNU General Public License v3.0
-License URI: http://www.opensource.org/licenses/gpl-license.php
+License URI: https://www.opensource.org/licenses/gpl-license.php
 
 */
 
