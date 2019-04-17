@@ -15,7 +15,7 @@ License URI: https://www.opensource.org/licenses/gpl-license.php
 */
 
 /**
-* Hook into the dashboarde initialization
+* Hook into the dashboard initialization
 */
 require_once( __DIR__ . '/classes/ActionScheduler_Admin.php' );
 add_action( 'plugins_loaded', [ 'ActionScheduler_Admin', 'init' ] );
