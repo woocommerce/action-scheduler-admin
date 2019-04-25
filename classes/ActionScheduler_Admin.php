@@ -23,23 +23,25 @@ class ActionScheduler_Admin {
 	public static function init() {
 		add_action( 'init', [ self::factory(), 'register_scripts' ] );
 		add_action( 'admin_enqueue_scripts', [ self::factory(), 'enqueue_scripts' ] );
-		add_action( 'admin_menu', [ self::factory(), 'register_pages' ], 12 );
+		add_filter( 'woocommerce_admin_report_menu_items', [ self::factory(), 'add_pages' ], 20 );
 		add_action( 'rest_api_init', [ self::factory(), 'register_api_endpoints' ] );
 	}
 
 	/**
-	 * Register the dashboard page with WooCommerce Admin.
+	 * Add the dashboard page with WooCommerce Admin.
+	 *
+	 * @param array $report_pages List of registered report pages
+	 *
+	 * @return array
 	 */
-	public function register_pages() {
-		if ( function_exists( 'wc_admin_register_page' ) ) {
-			wc_admin_register_page(
-				array(
-					'title'  => __( 'Scheduled Actions', 'action-scheduler-admin' ),
-					'parent' => '/analytics/revenue',
-					'path'   => '/analytics/scheduled-actions',
-				)
-			);
-		}
+	public function add_pages( $report_pages ) {
+		$report_pages[] = array(
+			'title'  => __( 'Scheduled Actions', 'action-scheduler-admin' ),
+			'parent' => '/analytics/revenue',
+			'path'   => '/analytics/scheduled-actions',
+		);
+
+		return $report_pages;
 	}
 
 	/**
@@ -77,7 +79,7 @@ class ActionScheduler_Admin {
 	 * Enqueue the scripts.
 	 */
 	function enqueue_scripts() {
-		if ( wc_admin_is_admin_page() ) {
+		if ( is_callable( [ 'WC_Admin_Loader',  'is_admin_page' ] ) && WC_Admin_Loader::is_admin_page() ) {
 			wp_enqueue_script( 'scheduled-actions-admin' );
 			wp_enqueue_script( WC_ADMIN_APP );
 		}
