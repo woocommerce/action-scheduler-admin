@@ -128,8 +128,13 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 	public function get_actions( $request ) {
 		$args     = $this->prepare_actions_query( $request );
 		$actions  = as_get_scheduled_actions( $args );
-		$timezone = new DateTimeZone( get_option( 'timezone_string', 'UTC' ) );
 		$data     = [];
+
+		try {
+			$timezone = new DateTimeZone( get_option( 'timezone_string' ) );
+		} catch ( Exception $e ) {
+			$timezone = new DateTimeZone( DateTimeZone::UTC );
+		}
 
 		foreach ( $actions as $action_id => $action ) {
 			// Display schedule date in more human friendly WP configured time zone.
