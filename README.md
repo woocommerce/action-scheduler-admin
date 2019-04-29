@@ -16,7 +16,7 @@ After cloning the repo, install dependencies with `npm install`. Now you can bui
 
  - `npm run clean` : Clean the `/dist/` folder where the React app lives
  - `npm run build:core` : Build a production version
- - `npm start` : Build a development version, watch files for changes
+ - `npm run start` : Build a development version, watch files for changes
  - `npm run prebuild` : Check for outdated dependencies and update those found
 
 There are also some helper scripts:

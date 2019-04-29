@@ -4,10 +4,14 @@
  */
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-import { Component } from '@wordpress/element';
-import { Fragment } from '@wordpress/element';
-import { Card, EmptyContent, ReportFilters, TableCard, TablePlaceholder } from '@woocommerce/components';
+import { Component, Fragment } from '@wordpress/element';
 import { map } from 'lodash';
+
+/**
+ * WooCommerce dependencies
+ */
+import { Card, EmptyContent, ReportFilters, TableCard, TablePlaceholder } from '@woocommerce/components';
+import { onQueryChange, stringifyQuery } from '@woocommerce/navigation';
 
 /**
  * Internal dependencies
@@ -18,31 +22,40 @@ const showDatePicker = false;
 
 class ActionsReport extends Component {
 
-	constructor() {
-		super();
+	constructor( props ) {
+		super( props );
 		this.state = {
 			actions: null,
 			loading: true,
 		};
+		this.getHeadersContent = this.getHeadersContent.bind( this );
+		this.getRowsContent = this.getRowsContent.bind( this );
 	}
 
 	componentDidMount() {
 		// This should be handled for us automagically, but the nonce wasn't working for me
 		apiFetch.use( apiFetch.createNonceMiddleware( asaSettings.nonce ) );
 		apiFetch.use( apiFetch.createRootURLMiddleware( asaSettings.api_root ) );
-// @todo: add query parameters
-		this.fetchActionData();
+
+		this.fetchActionData( {
+			orderby: 'scheduled',
+			order: 'asc',
+		} );
 	}
 
 	componentDidUpdate( prevProps ) {
 		const prevQuery = prevProps.query;
 		const query = this.props.query;
+
+		if (  query != prevQuery ) {
+			this.fetchActionData( query );
+		}
 	}
 
-	fetchActionData() {
+	fetchActionData( query ) {
 		const actionsEndpoint = `asa/v1/actions`;
 
-		apiFetch( { path: actionsEndpoint } ).then( actions => {
+		apiFetch( { path: actionsEndpoint + stringifyQuery( query ) } ).then( actions => {
 			this.setState( {
 				actions: actions,
 				loading: false,
@@ -56,7 +69,6 @@ class ActionsReport extends Component {
 				label: __( 'Hook', 'action-scheduler-admin' ),
 				key: 'hook',
 				required: true,
-				defaultSort: true,
 				isSortable: true,
 			},
 			{
@@ -75,6 +87,7 @@ class ActionsReport extends Component {
 				label: __( 'Scheduled', 'action-scheduler-admin' ),
 				key: 'scheduled',
 				required: true,
+				defaultSort: true,
 				isSortable: true,
 			},
 			{
@@ -130,6 +143,9 @@ class ActionsReport extends Component {
 		} );
 	}
 
+	onQueryChange( changeType ) {
+		// noop
+	}
 	renderParameter( parameter, i ) {
 		return (
 			<li key={i}>{ parameter }</li>
@@ -170,11 +186,6 @@ class ActionsReport extends Component {
 
 		const headers = this.getHeadersContent();
 
-		const tableQuery = {
-			...query,
-			orderby: query.orderby || 'scheduled',
-			order: query.order || 'asc',
-		};
 		return (
 			<TableCard
 				title={ __( 'Scheduled Actions', 'action-scheduler-admin' ) }
@@ -182,8 +193,9 @@ class ActionsReport extends Component {
 				totalRows={ rows.length }
 				rowsPerPage={ 100 }
 				headers={ headers }
-				onQueryChange={ () => {} }
-				query={ tableQuery }
+				onQueryChange={ onQueryChange }
+				onSort={ onQueryChange }
+				query={ query }
 				summary={ null }
 			/>
 		);
@@ -192,11 +204,7 @@ class ActionsReport extends Component {
 	render() {
 		const { loading, actions } = this.state;
 		const { path, query } = this.props;
-/*
-		return (
-			<div>{ __( 'No results could be found.', 'action-scheduler-admin' ) }</div>	
-		);
-/**/
+
 		// if we aren't loading, and there are no labels
 		// show an EmptyContent message
 		if ( ! loading && ! actions.length ) {

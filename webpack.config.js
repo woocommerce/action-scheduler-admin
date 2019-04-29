@@ -29,6 +29,7 @@ const externals = {
   '@wordpress/i18n': 'window.wp.i18n',
   '@wordpress/keycodes': { this: [ 'wp', 'keycodes' ] },
   '@woocommerce/components': 'window.wc.components',
+  '@woocommerce/navigation': 'window.wc.navigation',
   tinymce: 'tinymce',
   lodash: 'lodash',
   moment: 'moment',
