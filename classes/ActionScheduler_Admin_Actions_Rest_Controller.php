@@ -133,13 +133,16 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 		try {
 			$timezone = new DateTimeZone( get_option( 'timezone_string' ) );
 		} catch ( Exception $e ) {
-			$timezone = new DateTimeZone( DateTimeZone::UTC );
+			$timezone = false;
 		}
 
 		foreach ( $actions as $action_id => $action ) {
 			// Display schedule date in more human friendly WP configured time zone.
 			$next = $action->get_schedule()->next();
-			$next->setTimezone( $timezone );
+			if ( $timezone ) {
+				$next->setTimezone( $timezone );
+			}
+
 			$schedule         = new ActionScheduler_SimpleSchedule( $next );
 			$schedule_display = $this->get_schedule_display( $schedule );
 			$parameters       = [];
