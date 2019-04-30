@@ -128,6 +128,8 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 	public function get_actions( $request ) {
 		$args     = $this->prepare_actions_query( $request );
 		$actions  = as_get_scheduled_actions( $args );
+		$data     = [];
+
 		try {
 			$timezone = new DateTimeZone( get_option( 'timezone_string' ) );
 		} catch ( Exception $e ) {
