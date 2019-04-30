@@ -14,7 +14,7 @@ import ActionsReport from './as-report';
 /**
  * Use the 'woocommerce-reports-list' filter to add a report page.
  */
-addFilter( 'woocommerce-reports-list', 'analytics/scheduled-actions', reports => {
+addFilter( 'woocommerce_admin_reports_list', 'analytics/scheduled-actions', reports => {
   return [
     ...reports,
 	  {
