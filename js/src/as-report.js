@@ -88,6 +88,7 @@ class ActionsReport extends Component {
 				key: 'scheduled',
 				required: true,
 				defaultSort: true,
+				defaultOrder: 'asc',
 				isSortable: true,
 			},
 			{
