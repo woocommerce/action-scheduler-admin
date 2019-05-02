@@ -16,6 +16,7 @@ import { onQueryChange, stringifyQuery } from '@woocommerce/navigation';
 /**
  * Internal dependencies
  */
+import { statusFilters } from './config';
 const showDatePicker = false;
 
 //@todo: import './style.scss'; if necessary
@@ -40,6 +41,7 @@ class ActionsReport extends Component {
 		this.fetchActionData( {
 			orderby: 'scheduled',
 			order: 'asc',
+			status: 'pending',
 		} );
 	}
 
@@ -116,7 +118,7 @@ class ActionsReport extends Component {
 
 			return [
 				{
-					display: hook,
+					display: this.renderHook( hook ),
 					value: hook,
 				},
 				{
@@ -168,6 +170,26 @@ class ActionsReport extends Component {
 		);
 
 	}
+
+	renderHook( hook ) {
+		if ( hook.length <= 30 ) {
+			return hook;
+		}
+
+		var count = 0;
+		var pieces = hook.split( '_' );
+		for ( var i = 0; i < pieces.length; i++ ) {
+			count += pieces[i].length + 1;
+
+			if ( count >= 30 ) {
+				pieces[i] = ' ' + pieces[i];
+				count = 0;
+			}
+		}
+
+		return pieces.join( '_' );
+	}
+
 	renderPlaceholder() {
 		const headers = this.getHeadersContent();
 		return ( 
@@ -181,24 +203,26 @@ class ActionsReport extends Component {
 	}
 
 	renderTable() {
-		const { query } = this.props;
+		const { path, query } = this.props;
 
 		const rows = this.getRowsContent() || [];
 
 		const headers = this.getHeadersContent();
 
 		return (
-			<TableCard
-				title={ __( 'Scheduled Actions', 'action-scheduler-admin' ) }
-				rows={ rows }
-				totalRows={ rows.length }
-				rowsPerPage={ 100 }
-				headers={ headers }
-				onQueryChange={ onQueryChange }
-				onSort={ onQueryChange }
-				query={ query }
-				summary={ null }
-			/>
+			<Fragment>
+				<TableCard
+					title={ __( 'Scheduled Actions', 'action-scheduler-admin' ) }
+					rows={ rows }
+					totalRows={ rows.length }
+					rowsPerPage={ 100 }
+					headers={ headers }
+					onQueryChange={ onQueryChange }
+					onSort={ onQueryChange }
+					query={ query }
+					summary={ null }
+				/>
+			</Fragment>
 		);
 	}
 
@@ -212,12 +236,16 @@ class ActionsReport extends Component {
 			return (
 				<Fragment>
 					<ReportFilters
-						query={ query }
+						filters={ statusFilters }
 						path={ path }
+						query={ query }
 						showDatePicker={ showDatePicker }
 					/>
 					<EmptyContent
-						title={ __( 'No results could be found.', 'action-scheduler-admin' ) }
+						title={ __( 'No results were found.', 'action-scheduler-admin' ) }
+						message={ __( 'Choose a different Action Status.', 'action-scheduler-admin' ) }
+						actionLabel=""
+						actionURL="#"
 					/>
 				</Fragment>
 			);
@@ -226,8 +254,9 @@ class ActionsReport extends Component {
 		return (
 			<Fragment>
 				<ReportFilters
-					query={ query }
+					filters={ statusFilters }
 					path={ path }
+					query={ query }
 					showDatePicker={ showDatePicker }
 				/>
 				{ ! loading ? this.renderTable() : this.renderPlaceholder() }

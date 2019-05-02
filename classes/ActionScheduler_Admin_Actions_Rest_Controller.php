@@ -111,8 +111,9 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 			'offset'   => $request[ 'offset' ],
 			'per_page' => $request[ 'page' ],
 			'group'    => $request[ 'group' ],
-			'status'   => ActionScheduler_Store::STATUS_PENDING,
+			'status'   => $request[ 'status' ],
 			'orderby'  => strtolower( $request[ 'orderby' ] ),
+			'order'  => strtolower( $request[ 'order' ] ),
 		];
 
 		$args[ 'orderby' ] = in_array( $args[ 'orderby' ], [ 'hook', 'group' ], true ) ? $args[ 'orderby' ] : '';
@@ -148,6 +149,10 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 			$parameters       = [];
 
 			foreach ( $action->get_args() as $key => $value ) {
+				if ( is_array( $value ) || is_object( $value ) ) {
+					$value = wp_json_encode( $value );
+				}
+
 				$parameters[] = sprintf( '%s => %s', $key, $value );
 			}
 
