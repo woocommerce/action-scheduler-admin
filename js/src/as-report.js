@@ -74,6 +74,12 @@ class ActionsReport extends Component {
 				isSortable: true,
 			},
 			{
+				label: __( 'Status', 'action-scheduler-admin' ),
+				key: 'status',
+				required: false,
+				isSortable: false,
+			},
+			{
 				label: __( 'Group', 'action-scheduler-admin' ),
 				key: 'group',
 				required: false,
@@ -109,6 +115,7 @@ class ActionsReport extends Component {
 			const {
 				hook,
 				group,
+				status,
 				parameters,
 				timestamp,
 				scheduled,
@@ -120,6 +127,10 @@ class ActionsReport extends Component {
 				{
 					display: this.renderHook( hook ),
 					value: hook,
+				},
+				{
+					display: status,
+					value: status,
 				},
 				{
 					display: group,
@@ -210,19 +221,17 @@ class ActionsReport extends Component {
 		const headers = this.getHeadersContent();
 
 		return (
-			<Fragment>
-				<TableCard
-					title={ __( 'Scheduled Actions', 'action-scheduler-admin' ) }
-					rows={ rows }
-					totalRows={ rows.length }
-					rowsPerPage={ 100 }
-					headers={ headers }
-					onQueryChange={ onQueryChange }
-					onSort={ onQueryChange }
-					query={ query }
-					summary={ null }
-				/>
-			</Fragment>
+			<TableCard
+				title={ __( 'Scheduled Actions', 'action-scheduler-admin' ) }
+				rows={ rows }
+				totalRows={ rows.length }
+				rowsPerPage={ 100 }
+				headers={ headers }
+				onQueryChange={ onQueryChange }
+				onSort={ onQueryChange }
+				query={ query }
+				summary={ null }
+			/>
 		);
 	}
 

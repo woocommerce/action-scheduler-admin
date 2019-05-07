@@ -127,9 +127,11 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 	 * @return array Of WP_Error or WP_REST_Response.
 	 */
 	public function get_actions( $request ) {
-		$args    = $this->prepare_actions_query( $request );
-		$actions = as_get_scheduled_actions( $args );
-		$data    = [];
+		$args          = $this->prepare_actions_query( $request );
+		$actions       = as_get_scheduled_actions( $args );
+		$data          = [];
+		$store         = ActionScheduler::store();
+		$status_labels = $store->get_status_labels();
 
 		try {
 			$timezone = new DateTimeZone( get_option( 'timezone_string' ) );
@@ -156,10 +158,17 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 				$parameters[] = sprintf( '%s => %s', $key, $value );
 			}
 
+			try {
+				$status = $store->get_status( $action_id );
+			} catch ( Exception $e ) {
+				$status = '';
+			}
+
 			$action_data = [
 				'id'             => $action_id,
 				'hook'           => $action->get_hook(),
 				'group'          => $action->get_group(),
+				'status'         => isset( $status_labels[ $status ] ) ? $status_labels[ $status ] : $status,
 				'timestamp'      => $schedule_display['timestamp'],
 				'scheduled'      => $schedule_display['date'],
 				'schedule_delta' => $schedule_display['delta'],

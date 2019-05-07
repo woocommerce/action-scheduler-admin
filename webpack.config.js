@@ -17,19 +17,19 @@ const CustomTemplatedPathPlugin = require( '@wordpress/custom-templated-path-web
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 const externals = {
-  '@wordpress/api-fetch': 'window.wp.apiFetch',
+  '@wordpress/api-fetch': { this: [ 'wp', 'apiFetch' ] },
   '@wordpress/blocks': { this: [ 'wp', 'blocks' ] },
   '@wordpress/components': { this: [ 'wp', 'components' ] },
   '@wordpress/compose': { this: [ 'wp', 'compose' ] },
   '@wordpress/data': { this: [ 'wp', 'data' ] },
   '@wordpress/editor': { this: [ 'wp', 'editor' ] },
-  '@wordpress/element': 'window.wp.element',
-  '@wordpress/hooks': 'window.wp.hooks',
+  '@wordpress/element': { this: [ 'wp', 'element' ] },
+  '@wordpress/hooks': { this: [ 'wp', 'hooks' ] },
   '@wordpress/html-entities': { this: [ 'wp', 'htmlEntities' ] },
-  '@wordpress/i18n': 'window.wp.i18n',
+  '@wordpress/i18n': { this: [ 'wp', 'i18n' ] },
   '@wordpress/keycodes': { this: [ 'wp', 'keycodes' ] },
-  '@woocommerce/components': 'window.wc.components',
-  '@woocommerce/navigation': 'window.wc.navigation',
+  '@woocommerce/components': { this: [ 'wc', 'components' ] },
+  '@woocommerce/navigation': { this: [ 'wc', 'navigation' ] },
   tinymce: 'tinymce',
   lodash: 'lodash',
   moment: 'moment',
@@ -45,6 +45,8 @@ const webpackConfig = {
   output: {
     filename: './dist/index.js',
     path: __dirname,
+    library: [ 'wc', '[modulename]' ],
+    libraryTarget: 'this',
   },
   externals,
   module: {
