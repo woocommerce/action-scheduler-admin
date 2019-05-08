@@ -11,7 +11,7 @@ import { map } from 'lodash';
  * WooCommerce dependencies
  */
 import { Card, EmptyContent, ReportFilters, TableCard, TablePlaceholder } from '@woocommerce/components';
-import { onQueryChange, stringifyQuery } from '@woocommerce/navigation';
+import { getQuery, onQueryChange, stringifyQuery } from '@woocommerce/navigation';
 
 /**
  * Internal dependencies
@@ -34,15 +34,10 @@ class ActionsReport extends Component {
 	}
 
 	componentDidMount() {
-		// This should be handled for us automagically, but the nonce wasn't working for me
 		apiFetch.use( apiFetch.createNonceMiddleware( asaSettings.nonce ) );
 		apiFetch.use( apiFetch.createRootURLMiddleware( asaSettings.api_root ) );
 
-		this.fetchActionData( {
-			orderby: 'scheduled',
-			order: 'asc',
-			status: 'pending',
-		} );
+		this.fetchActionData( getQuery() );
 	}
 
 	componentDidUpdate( prevProps ) {
@@ -57,7 +52,19 @@ class ActionsReport extends Component {
 	fetchActionData( query ) {
 		const actionsEndpoint = `asa/v1/actions`;
 
-		apiFetch( { path: actionsEndpoint + stringifyQuery( query ) } ).then( actions => {
+		var fullQuery = Object.assign( {
+				orderby: 'scheduled',
+				order: 'asc',
+				status: 'pending',
+			},
+			query
+		);
+
+		if ( fullQuery.status == 'all' ) {
+			fullQuery.status = '';
+		}
+
+		apiFetch( { path: actionsEndpoint + stringifyQuery( fullQuery ) } ).then( actions => {
 			this.setState( {
 				actions: actions,
 				loading: false,
