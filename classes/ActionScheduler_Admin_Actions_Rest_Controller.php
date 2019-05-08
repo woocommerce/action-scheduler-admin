@@ -265,7 +265,7 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 		}
 
 		$schedule_display['timestamp'] = $schedule->next()->getTimestamp();
-		$schedule_display['date']      = $schedule->next()->format( 'Y-m-d H:i:s O' );
+		$schedule_display['date']      = $schedule->next()->format( 'Y-m-d H:i:sP' );
 
 		if ( gmdate( 'U' ) > $schedule_display['timestamp'] ) {
 			$schedule_display['delta'] = sprintf( __( '(%s ago)', 'action-scheduler-admin' ), self::human_interval( gmdate( 'U' ) - $schedule_display['timestamp'] ) );

@@ -10,7 +10,7 @@ import { map } from 'lodash';
 /**
  * WooCommerce dependencies
  */
-import { Card, EmptyContent, ReportFilters, TableCard, TablePlaceholder } from '@woocommerce/components';
+import { Card, Date, EmptyContent, ReportFilters, TableCard, TablePlaceholder } from '@woocommerce/components';
 import { getQuery, onQueryChange, stringifyQuery } from '@woocommerce/navigation';
 
 /**
@@ -150,7 +150,7 @@ class ActionsReport extends Component {
 				{
 					display: (
 						<Fragment>
-						{ scheduled }<br />
+						<Date date={ scheduled } screenReaderFormat="F j, Y H:i:s" visibleFormat="Y-m-d H:i:s P" /> <br />
 						{ schedule_delta }
 						</Fragment>
 					),
