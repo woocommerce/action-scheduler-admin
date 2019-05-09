@@ -64,9 +64,10 @@ class ActionsReport extends Component {
 			fullQuery.status = '';
 		}
 
-		apiFetch( { path: actionsEndpoint + stringifyQuery( fullQuery ) } ).then( actions => {
+		apiFetch( { path: actionsEndpoint + stringifyQuery( fullQuery ) } ).then( response => {
 			this.setState( {
-				actions: actions,
+				actions: response.actions,
+				pagination: response.pagination,
 				loading: false,
 			} );
 		} );
@@ -167,6 +168,7 @@ class ActionsReport extends Component {
 	onQueryChange( changeType ) {
 		// noop
 	}
+
 	renderParameter( parameter, i ) {
 		return (
 			<li key={i}>{ parameter }</li>
@@ -222,6 +224,7 @@ class ActionsReport extends Component {
 
 	renderTable() {
 		const { path, query } = this.props;
+		const { perPage, totalRows } = this.state.pagination;
 
 		const rows = this.getRowsContent() || [];
 
@@ -231,8 +234,8 @@ class ActionsReport extends Component {
 			<TableCard
 				title={ __( 'Scheduled Actions', 'action-scheduler-admin' ) }
 				rows={ rows }
-				totalRows={ rows.length }
-				rowsPerPage={ 100 }
+				totalRows={ totalRows }
+				rowsPerPage={ perPage }
 				headers={ headers }
 				onQueryChange={ onQueryChange }
 				onSort={ onQueryChange }
