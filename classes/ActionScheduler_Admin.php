@@ -60,7 +60,7 @@ class ActionScheduler_Admin {
 		wp_register_script(
 			'scheduled-actions-admin',
 			plugins_url( '/dist/index.js', __DIR__ ),
-			[ 'wp-hooks', 'wp-element', 'wp-i18n', 'wc-components' ],
+			[ 'wp-hooks', 'wp-element', 'wp-i18n', 'wc-components', 'wc-navigation' ],
 			filemtime( dirname( __DIR__ ) . '/dist/index.js' ),
 			true
 		);

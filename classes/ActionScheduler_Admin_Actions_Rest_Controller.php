@@ -111,8 +111,9 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 			'offset'   => $request[ 'offset' ],
 			'per_page' => $request[ 'page' ],
 			'group'    => $request[ 'group' ],
-			'status'   => ActionScheduler_Store::STATUS_PENDING,
+			'status'   => $request[ 'status' ],
 			'orderby'  => strtolower( $request[ 'orderby' ] ),
+			'order'  => strtolower( $request[ 'order' ] ),
 		];
 
 		$args[ 'orderby' ] = in_array( $args[ 'orderby' ], [ 'hook', 'group' ], true ) ? $args[ 'orderby' ] : '';
@@ -126,9 +127,11 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 	 * @return array Of WP_Error or WP_REST_Response.
 	 */
 	public function get_actions( $request ) {
-		$args     = $this->prepare_actions_query( $request );
-		$actions  = as_get_scheduled_actions( $args );
-		$data     = [];
+		$args          = $this->prepare_actions_query( $request );
+		$actions       = as_get_scheduled_actions( $args );
+		$data          = [];
+		$store         = ActionScheduler::store();
+		$status_labels = $store->get_status_labels();
 
 		try {
 			$timezone = new DateTimeZone( get_option( 'timezone_string' ) );
@@ -148,13 +151,24 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 			$parameters       = [];
 
 			foreach ( $action->get_args() as $key => $value ) {
+				if ( is_array( $value ) || is_object( $value ) ) {
+					$value = wp_json_encode( $value );
+				}
+
 				$parameters[] = sprintf( '%s => %s', $key, $value );
+			}
+
+			try {
+				$status = $store->get_status( $action_id );
+			} catch ( Exception $e ) {
+				$status = '';
 			}
 
 			$action_data = [
 				'id'             => $action_id,
 				'hook'           => $action->get_hook(),
 				'group'          => $action->get_group(),
+				'status'         => isset( $status_labels[ $status ] ) ? $status_labels[ $status ] : $status,
 				'timestamp'      => $schedule_display['timestamp'],
 				'scheduled'      => $schedule_display['date'],
 				'schedule_delta' => $schedule_display['delta'],
@@ -251,7 +265,7 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 		}
 
 		$schedule_display['timestamp'] = $schedule->next()->getTimestamp();
-		$schedule_display['date']      = $schedule->next()->format( 'Y-m-d H:i:s O' );
+		$schedule_display['date']      = $schedule->next()->format( 'Y-m-d H:i:sP' );
 
 		if ( gmdate( 'U' ) > $schedule_display['timestamp'] ) {
 			$schedule_display['delta'] = sprintf( __( '(%s ago)', 'action-scheduler-admin' ), self::human_interval( gmdate( 'U' ) - $schedule_display['timestamp'] ) );

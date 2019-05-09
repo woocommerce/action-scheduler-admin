@@ -4,45 +4,67 @@
  */
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
-import { Component } from '@wordpress/element';
-import { Fragment } from '@wordpress/element';
-import { Card, EmptyContent, ReportFilters, TableCard, TablePlaceholder } from '@woocommerce/components';
+import { Component, Fragment } from '@wordpress/element';
 import { map } from 'lodash';
+
+/**
+ * WooCommerce dependencies
+ */
+import { Card, Date, EmptyContent, ReportFilters, TableCard, TablePlaceholder } from '@woocommerce/components';
+import { getQuery, onQueryChange, stringifyQuery } from '@woocommerce/navigation';
 
 /**
  * Internal dependencies
  */
+import { statusFilters } from './config';
 const showDatePicker = false;
 
 //@todo: import './style.scss'; if necessary
 
 class ActionsReport extends Component {
 
-	constructor() {
-		super();
+	constructor( props ) {
+		super( props );
 		this.state = {
 			actions: null,
 			loading: true,
 		};
+		this.getHeadersContent = this.getHeadersContent.bind( this );
+		this.getRowsContent = this.getRowsContent.bind( this );
 	}
 
 	componentDidMount() {
-		// This should be handled for us automagically, but the nonce wasn't working for me
 		apiFetch.use( apiFetch.createNonceMiddleware( asaSettings.nonce ) );
 		apiFetch.use( apiFetch.createRootURLMiddleware( asaSettings.api_root ) );
-// @todo: add query parameters
-		this.fetchActionData();
+
+		this.fetchActionData( getQuery() );
 	}
 
 	componentDidUpdate( prevProps ) {
 		const prevQuery = prevProps.query;
 		const query = this.props.query;
+
+		if (  query != prevQuery ) {
+			this.fetchActionData( query );
+		}
 	}
 
-	fetchActionData() {
+	fetchActionData( query ) {
 		const actionsEndpoint = `asa/v1/actions`;
 
-		apiFetch( { path: actionsEndpoint } ).then( actions => {
+		var fullQuery = Object.assign( {
+				orderby: 'scheduled',
+				order: 'asc',
+				status: 'pending',
+			},
+			query
+		);
+
+		if ( fullQuery.status == 'all' ) {
+			fullQuery.status = '';
+		}
+
+		apiFetch( { path: actionsEndpoint + stringifyQuery( fullQuery ) } ).then( actions => {
 			this.setState( {
 				actions: actions,
 				loading: false,
@@ -56,8 +78,13 @@ class ActionsReport extends Component {
 				label: __( 'Hook', 'action-scheduler-admin' ),
 				key: 'hook',
 				required: true,
-				defaultSort: true,
 				isSortable: true,
+			},
+			{
+				label: __( 'Status', 'action-scheduler-admin' ),
+				key: 'status',
+				required: false,
+				isSortable: false,
 			},
 			{
 				label: __( 'Group', 'action-scheduler-admin' ),
@@ -75,6 +102,8 @@ class ActionsReport extends Component {
 				label: __( 'Scheduled', 'action-scheduler-admin' ),
 				key: 'scheduled',
 				required: true,
+				defaultSort: true,
+				defaultOrder: 'asc',
 				isSortable: true,
 			},
 			{
@@ -93,6 +122,7 @@ class ActionsReport extends Component {
 			const {
 				hook,
 				group,
+				status,
 				parameters,
 				timestamp,
 				scheduled,
@@ -102,8 +132,12 @@ class ActionsReport extends Component {
 
 			return [
 				{
-					display: hook,
+					display: this.renderHook( hook ),
 					value: hook,
+				},
+				{
+					display: status,
+					value: status,
 				},
 				{
 					display: group,
@@ -116,7 +150,7 @@ class ActionsReport extends Component {
 				{
 					display: (
 						<Fragment>
-						{ scheduled }<br />
+						<Date date={ scheduled } screenReaderFormat="F j, Y H:i:s" visibleFormat="Y-m-d H:i:s P" /> <br />
 						{ schedule_delta }
 						</Fragment>
 					),
@@ -130,6 +164,9 @@ class ActionsReport extends Component {
 		} );
 	}
 
+	onQueryChange( changeType ) {
+		// noop
+	}
 	renderParameter( parameter, i ) {
 		return (
 			<li key={i}>{ parameter }</li>
@@ -151,6 +188,26 @@ class ActionsReport extends Component {
 		);
 
 	}
+
+	renderHook( hook ) {
+		if ( hook.length <= 30 ) {
+			return hook;
+		}
+
+		var count = 0;
+		var pieces = hook.split( '_' );
+		for ( var i = 0; i < pieces.length; i++ ) {
+			count += pieces[i].length + 1;
+
+			if ( count >= 30 ) {
+				pieces[i] = ' ' + pieces[i];
+				count = 0;
+			}
+		}
+
+		return pieces.join( '_' );
+	}
+
 	renderPlaceholder() {
 		const headers = this.getHeadersContent();
 		return ( 
@@ -164,17 +221,12 @@ class ActionsReport extends Component {
 	}
 
 	renderTable() {
-		const { query } = this.props;
+		const { path, query } = this.props;
 
 		const rows = this.getRowsContent() || [];
 
 		const headers = this.getHeadersContent();
 
-		const tableQuery = {
-			...query,
-			orderby: query.orderby || 'scheduled',
-			order: query.order || 'asc',
-		};
 		return (
 			<TableCard
 				title={ __( 'Scheduled Actions', 'action-scheduler-admin' ) }
@@ -182,8 +234,9 @@ class ActionsReport extends Component {
 				totalRows={ rows.length }
 				rowsPerPage={ 100 }
 				headers={ headers }
-				onQueryChange={ () => {} }
-				query={ tableQuery }
+				onQueryChange={ onQueryChange }
+				onSort={ onQueryChange }
+				query={ query }
 				summary={ null }
 			/>
 		);
@@ -192,23 +245,23 @@ class ActionsReport extends Component {
 	render() {
 		const { loading, actions } = this.state;
 		const { path, query } = this.props;
-/*
-		return (
-			<div>{ __( 'No results could be found.', 'action-scheduler-admin' ) }</div>	
-		);
-/**/
+
 		// if we aren't loading, and there are no labels
 		// show an EmptyContent message
 		if ( ! loading && ! actions.length ) {
 			return (
 				<Fragment>
 					<ReportFilters
-						query={ query }
+						filters={ statusFilters }
 						path={ path }
+						query={ query }
 						showDatePicker={ showDatePicker }
 					/>
 					<EmptyContent
-						title={ __( 'No results could be found.', 'action-scheduler-admin' ) }
+						title={ __( 'No results were found.', 'action-scheduler-admin' ) }
+						message={ __( 'Choose a different Action Status.', 'action-scheduler-admin' ) }
+						actionLabel=""
+						actionURL="#"
 					/>
 				</Fragment>
 			);
@@ -217,8 +270,9 @@ class ActionsReport extends Component {
 		return (
 			<Fragment>
 				<ReportFilters
-					query={ query }
+					filters={ statusFilters }
 					path={ path }
+					query={ query }
 					showDatePicker={ showDatePicker }
 				/>
 				{ ! loading ? this.renderTable() : this.renderPlaceholder() }
