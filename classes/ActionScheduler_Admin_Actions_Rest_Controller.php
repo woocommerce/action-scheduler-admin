@@ -95,6 +95,7 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 				[
 					'methods'  => WP_REST_Server::READABLE,
 					'callback' => [ self::$instance, 'get_actions' ],
+					'args'     => $this->get_collection_params(),
 				],
 			]
 		);
@@ -108,15 +109,13 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 	 */
 	protected function prepare_actions_query( $request ) {
 		$args = [
-			'offset'   => $request[ 'offset' ],
-			'per_page' => $request[ 'page' ],
+			'offset'   => $request[ 'page' ],
+			'per_page' => $request[ 'per_page' ],
 			'group'    => $request[ 'group' ],
 			'status'   => $request[ 'status' ],
 			'orderby'  => strtolower( $request[ 'orderby' ] ),
 			'order'  => strtolower( $request[ 'order' ] ),
 		];
-
-		$args[ 'orderby' ] = in_array( $args[ 'orderby' ], [ 'hook', 'group' ], true ) ? $args[ 'orderby' ] : '';
 
 		return $args;
 	}
@@ -127,11 +126,18 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 	 * @return array Of WP_Error or WP_REST_Response.
 	 */
 	public function get_actions( $request ) {
-		$args          = $this->prepare_actions_query( $request );
-		$actions       = as_get_scheduled_actions( $args );
-		$data          = [];
 		$store         = ActionScheduler::store();
 		$status_labels = $store->get_status_labels();
+		$args          = $this->prepare_actions_query( $request );
+		$action_ids    = $store->query_actions( $args );
+		$data          = [];
+		$response      = [
+			'pagination' => [
+				'totalRows' => (int) $store->query_actions( $args, 'count' ),
+				'perPage'   => (int) $args['per_page'],
+				'offset'    => (int) $args['offset'],
+			]
+		];
 
 		try {
 			$timezone = new DateTimeZone( get_option( 'timezone_string' ) );
@@ -139,9 +145,10 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 			$timezone = false;
 		}
 
-		foreach ( $actions as $action_id => $action ) {
+		foreach ( $action_ids as $action_id ) {
+			$action = $store->fetch_action( $action_id );
 			// Display schedule date in more human friendly WP configured time zone.
-			$next = $action->get_schedule()->next();
+			$next   = $action->get_schedule()->next();
 			if ( $timezone ) {
 				$next->setTimezone( $timezone );
 			}
@@ -186,8 +193,9 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 			ksort( $data );
 		}
 
+		$response['actions'] = array_values( $data );
 		// Reset the array keys to prevent downstream key sorting.
-		return rest_ensure_response( array_values( $data ) );
+		return rest_ensure_response( $response );
 	}
 
 	/**
@@ -274,5 +282,65 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 		}
 
 		return $schedule_display;
+	}
+
+	/**
+	 * Get the query params for collections.
+	 *
+	 * @return array
+	 */
+	public function get_collection_params() {
+		$stati = array_keys( ActionScheduler::store()->get_status_labels() );
+		$stati[] = '';
+
+		$params = [
+			'offset' => [
+				'type'              => 'integer',
+				'default'           => 0,
+				'sanitize_callback' => 'absint',
+				'validate_callback' => 'rest_validate_request_arg',
+				'minimum'           => 0,
+			],
+			'per_page' => [
+				'type'              => 'integer',
+				'default'           => 100,
+				'sanitize_callback' => 'absint',
+				'validate_callback' => 'rest_validate_request_arg',
+				'minimum'           => 0,
+			],
+			'group' => [
+				'type'              => 'string',
+				'default'           => '',
+				'validate_callback' => 'rest_validate_request_arg',
+			],
+			'status' => [
+				'type'              => 'string',
+				'default'           => '',
+				'enum'              => $stati,
+				'validate_callback' => 'rest_validate_request_arg',
+			],
+			'orderby' => [
+				'type'              => 'string',
+				'default'           => 'scheduled',
+				'enum'              => [
+					'hook',
+					'group',
+					'scheduled',
+					'recurrence',
+				],
+				'validate_callback' => 'rest_validate_request_arg',
+			],
+			'order' => [
+				'type'              => 'string',
+				'default'           => 'asc',
+				'enum'              => [
+					'asc',
+					'desc'
+				],
+				'validate_callback' => 'rest_validate_request_arg',
+			],
+		];
+
+		return $params;
 	}
 }
