@@ -149,11 +149,13 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 			$action = $store->fetch_action( $action_id );
 			// Display schedule date in more human friendly WP configured time zone.
 			$next   = $action->get_schedule()->next();
-			if ( $timezone ) {
+			if ( $next && $timezone ) {
 				$next->setTimezone( $timezone );
+				$schedule = new ActionScheduler_SimpleSchedule( $next );
+			} else {
+				$schedule = new ActionScheduler_NullSchedule();
 			}
 
-			$schedule         = new ActionScheduler_SimpleSchedule( $next );
 			$schedule_display = $this->get_schedule_display( $schedule );
 			$parameters       = [];
 
@@ -183,7 +185,8 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 				'recurrence'     => $this->get_recurrence( $action ),
 			];
 
-			$key          = ( ! empty( $args[ 'orderby' ] ) ? $action_data[ $args[ 'orderby' ] ] . '_' : '' ) . $next->getTimestamp();
+			$unique       = $next ? $next->getTimestamp() : sprintf( '%08d', count( $data ) );
+			$key          = ( ! empty( $args[ 'orderby' ] ) ? $action_data[ $args[ 'orderby' ] ] . '_' : '' ) . $unique;
 			$data[ $key ] = $action_data;
 		}
 
@@ -266,7 +269,11 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 	 */
 	protected function get_schedule_display( ActionScheduler_Schedule $schedule ) {
 
-		$schedule_display = [];
+		$schedule_display = [
+			'timestamp' => '',
+			'date'      => '',
+			'delta'     => '',
+		];
 
 		if ( ! $schedule->next() ) {
 			return $schedule_display;
