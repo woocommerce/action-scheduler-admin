@@ -15,7 +15,7 @@ import ActionsReport from './as-report';
 /**
  * Use the 'woocommerce_admin_reports_list' filter to add a report page.
  */
-addFilter( 'woocommerce_admin_reports_list', 'analytics/scheduled-actions', reports => {
+addFilter( 'woocommerce_admin_reports_list', 'scheduled-actions-report-filter', reports => {
   return [
     ...reports,
 	  {
@@ -29,13 +29,9 @@ addFilter( 'woocommerce_admin_reports_list', 'analytics/scheduled-actions', repo
 /**
  * Use the 'woocommerce_admin_time_excluded_screens' filter to remove date parameters from the query string.
  */
-addFilter( 'woocommerce_admin_reports_list', 'analytics/scheduled-actions', pages => {
+addFilter( 'woocommerce_admin_time_excluded_screens', 'scheduled-actions-date-filter', pages => {
   return [
     ...pages,
-	{
-		path: '/analytics/scheduled-actions',
-		wpOpenMenu: 'toplevel_page_wc-admin--analytics-revenue',
-		wpClosedMenu: 'toplevel_page_woocommerce',
-	},
+	'scheduled-actions'
   ];
 } );
