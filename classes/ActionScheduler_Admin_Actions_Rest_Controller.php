@@ -196,8 +196,8 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 			ksort( $data );
 		}
 
-		$response['actions'] = array_values( $data );
 		// Reset the array keys to prevent downstream key sorting.
+		$response['actions'] = array_values( $data );
 		return rest_ensure_response( $response );
 	}
 
