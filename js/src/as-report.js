@@ -49,6 +49,7 @@ class ActionsReport extends Component {
 			if ( query.status !== prevQuery.status ) {
 				query.orderby = 'scheduled';
 				query.order = 'asc';
+				query.per_page = prevQuery.per_page;
 			}
 			this.fetchActionData( query );
 		}
