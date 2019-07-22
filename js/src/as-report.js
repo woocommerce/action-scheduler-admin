@@ -2,16 +2,17 @@
 /**
  * External dependencies
  */
-import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { Component, Fragment } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
+import { addQueryArgs } from '@wordpress/url';
 import { map } from 'lodash';
 
 /**
  * WooCommerce dependencies
  */
 import { Card, Date, EmptyContent, ReportFilters, TableCard, TablePlaceholder } from '@woocommerce/components';
-import { getQuery, onQueryChange, stringifyQuery } from '@woocommerce/navigation';
+import { getQuery, onQueryChange } from '@woocommerce/navigation';
 
 /**
  * Internal dependencies
@@ -45,6 +46,11 @@ class ActionsReport extends Component {
 		const query = this.props.query;
 
 		if (  query != prevQuery ) {
+			if ( query.status !== prevQuery.status ) {
+				query.orderby = 'scheduled';
+				query.order = 'asc';
+				query.per_page = prevQuery.per_page;
+			}
 			this.fetchActionData( query );
 		}
 	}
@@ -64,7 +70,7 @@ class ActionsReport extends Component {
 			fullQuery.status = '';
 		}
 
-		apiFetch( { path: actionsEndpoint + stringifyQuery( fullQuery ) } ).then( response => {
+		apiFetch( { path: addQueryArgs( actionsEndpoint, fullQuery ) } ).then( response => {
 			this.setState( {
 				actions: response.actions,
 				pagination: response.pagination,
@@ -165,10 +171,6 @@ class ActionsReport extends Component {
 		} );
 	}
 
-	onQueryChange( changeType ) {
-		// noop
-	}
-
 	renderParameter( parameter, i ) {
 		return (
 			<li key={i}>{ parameter }</li>
@@ -238,7 +240,6 @@ class ActionsReport extends Component {
 				rowsPerPage={ perPage }
 				headers={ headers }
 				onQueryChange={ onQueryChange }
-				onSort={ onQueryChange }
 				query={ query }
 				summary={ null }
 			/>

@@ -108,8 +108,13 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 	 * @return array
 	 */
 	protected function prepare_actions_query( $request ) {
+		$offset = 0 < $request[ 'paged' ] ? $request[ 'paged' ] - 1 : 0;
+		if ( $request[ 'per_page' ] ) {
+			$offset *= $request[ 'per_page' ];
+		}
+
 		$args = [
-			'offset'   => $request[ 'page' ],
+			'offset'   => $offset,
 			'per_page' => $request[ 'per_page' ],
 			'group'    => $request[ 'group' ],
 			'status'   => $request[ 'status' ],
@@ -301,7 +306,7 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 		$stati[] = '';
 
 		$params = [
-			'offset' => [
+			'paged' => [
 				'type'              => 'integer',
 				'default'           => 0,
 				'sanitize_callback' => 'absint',
