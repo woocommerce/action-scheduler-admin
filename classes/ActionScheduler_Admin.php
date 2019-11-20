@@ -80,7 +80,7 @@ class ActionScheduler_Admin {
 	 * Enqueue the scripts.
 	 */
 	function enqueue_scripts() {
-		if ( is_callable( [ 'WC_Admin_Loader',  'is_admin_page' ] ) && WC_Admin_Loader::is_admin_page() ) {
+		if ( is_callable( [ 'Automattic\WooCommerce\Admin\Loader',  'is_admin_page' ] ) && Automattic\WooCommerce\Admin\Loader::is_admin_page() ) {
 			wp_enqueue_script( 'scheduled-actions-admin' );
 			wp_enqueue_script( WC_ADMIN_APP );
 		}
