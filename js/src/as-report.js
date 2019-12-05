@@ -13,6 +13,7 @@ import { map } from 'lodash';
  */
 import { Card, Date, EmptyContent, ReportFilters, TableCard, TablePlaceholder } from '@woocommerce/components';
 import { getQuery, onQueryChange } from '@woocommerce/navigation';
+import Currency from '@woocommerce/currency';
 
 /**
  * Internal dependencies
@@ -249,6 +250,7 @@ class ActionsReport extends Component {
 	render() {
 		const { loading, actions } = this.state;
 		const { path, query } = this.props;
+		const currency = new Currency();
 
 		// if we aren't loading, and there are no labels
 		// show an EmptyContent message
@@ -256,6 +258,7 @@ class ActionsReport extends Component {
 			return (
 				<Fragment>
 					<ReportFilters
+						currency={ currency }
 						filters={ statusFilters }
 						path={ path }
 						query={ query }
@@ -274,6 +277,7 @@ class ActionsReport extends Component {
 		return (
 			<Fragment>
 				<ReportFilters
+					currency={ currency }
 					filters={ statusFilters }
 					path={ path }
 					query={ query }

@@ -30,6 +30,7 @@ const externals = {
   '@wordpress/keycodes': { this: [ 'wp', 'keycodes' ] },
   '@wordpress/url': { this: [ 'wp', 'url' ] },
   '@woocommerce/components': { this: [ 'wc', 'components' ] },
+  '@woocommerce/currency': { this: [ 'wc', 'currency' ] },
   '@woocommerce/navigation': { this: [ 'wc', 'navigation' ] },
   tinymce: 'tinymce',
   lodash: 'lodash',
