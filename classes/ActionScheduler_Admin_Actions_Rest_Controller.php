@@ -192,7 +192,11 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 
 			$unique       = $next ? $next->getTimestamp() : sprintf( '%08d', count( $data ) );
 			$key          = ( ! empty( $args[ 'orderby' ] ) ? $action_data[ $args[ 'orderby' ] ] . '_' : '' ) . $unique;
-			$data[ $key ] = $action_data;
+			if ( ! isset( $data[ $key ] ) ) {
+				$data[ $key ] = $action_data;
+			} else {
+				$data[ $key . '-' . $action_id ] = $action_data;
+			}
 		}
 
 		if ( 'DESC' === strtoupper( $request['order'] ) ) {
