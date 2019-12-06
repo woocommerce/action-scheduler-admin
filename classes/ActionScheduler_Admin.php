@@ -23,7 +23,7 @@ class ActionScheduler_Admin {
 	public static function init() {
 		add_action( 'init', [ self::factory(), 'register_scripts' ] );
 		add_action( 'admin_enqueue_scripts', [ self::factory(), 'enqueue_scripts' ] );
-		add_filter( 'woocommerce_admin_report_menu_items', [ self::factory(), 'add_pages' ], 20 );
+		add_filter( 'woocommerce_analytics_report_menu_items', [ self::factory(), 'add_pages' ], 20 );
 		add_action( 'rest_api_init', [ self::factory(), 'register_api_endpoints' ] );
 	}
 
