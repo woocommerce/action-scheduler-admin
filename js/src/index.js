@@ -1,11 +1,9 @@
-
 /** @format */
 /**
  * External dependencies
  */
 import { addFilter } from '@wordpress/hooks';
 import { __ } from '@wordpress/i18n';
-
 
 /**
  * Internal dependencies

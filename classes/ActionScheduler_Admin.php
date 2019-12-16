@@ -23,7 +23,7 @@ class ActionScheduler_Admin {
 	public static function init() {
 		add_action( 'init', [ self::factory(), 'register_scripts' ] );
 		add_action( 'admin_enqueue_scripts', [ self::factory(), 'enqueue_scripts' ] );
-		add_filter( 'woocommerce_admin_report_menu_items', [ self::factory(), 'add_pages' ], 20 );
+		add_filter( 'woocommerce_analytics_report_menu_items', [ self::factory(), 'add_pages' ], 20 );
 		add_action( 'rest_api_init', [ self::factory(), 'register_api_endpoints' ] );
 	}
 
@@ -61,7 +61,7 @@ class ActionScheduler_Admin {
 		wp_register_script(
 			'scheduled-actions-admin',
 			plugins_url( '/dist/index.js', __DIR__ ),
-			[ 'wp-hooks', 'wp-element', 'wp-i18n', 'wc-components', 'wc-navigation' ],
+			[ 'wp-hooks', 'wp-element', 'wp-i18n', 'wc-components', 'wc-currency', 'wc-navigation' ],
 			filemtime( dirname( __DIR__ ) . '/dist/index.js' ),
 			true
 		);
