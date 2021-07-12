@@ -50,7 +50,7 @@ class ActionsReport extends Component {
 			if ( query.status !== prevQuery.status ) {
 				query.orderby = 'scheduled';
 				query.order = 'asc';
-				query.per_page = prevQuery.per_page;
+				query.per_page = prevQuery.per_page ? prevQuery.per_page : 100;
 			}
 			this.fetchActionData( query );
 		}
@@ -215,7 +215,7 @@ class ActionsReport extends Component {
 
 	renderPlaceholder() {
 		const headers = this.getHeadersContent();
-		return ( 
+		return (
 			<Card
 				title={ __( 'Scheduled Actions', 'action-scheduler-admin' ) }
 				className="action-scheduler-admin-placeholder"
