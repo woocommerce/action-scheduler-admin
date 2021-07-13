@@ -11,16 +11,27 @@ import { __ } from '@wordpress/i18n';
 import ActionsReport from './as-report';
 
 /**
- * Use the 'woocommerce_admin_reports_list' filter to add a report page.
+ * Use the WooCommerce Admin reports list filter to add a report page.
  */
-addFilter( 'woocommerce_admin_reports_list', 'scheduled-actions-report-filter', reports => {
+addFilter( 'woocommerce_admin_pages_list', 'scheduled-actions-report-filter', reports => {
   return [
     ...reports,
-	  {
-		  report: 'scheduled-actions',
-		  title: __( 'Scheduled Actions', 'action-scheduler-admin' ),
-		  component: ActionsReport
-	  },
+      {
+        breadcrumbs: [
+          '',
+          wcSettings.woocommerceTranslation,
+          __( 'Scheduled Actions', 'action-scheduler-admin' ),
+        ],
+        capability: 'manage_options',
+        container: ActionsReport,
+        navArgs: {
+          id: 'woocommerce-scheduled-actions',
+        },
+        path: '/scheduled-actions',
+        report: 'scheduled-actions',
+        title: __( 'Scheduled Actions', 'action-scheduler-admin' ),
+        wpOpenMenu: 'toplevel_page_woocommerce',
+      },
   ];
 } );
 
