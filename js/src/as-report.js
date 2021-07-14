@@ -137,7 +137,7 @@ class ActionsReport extends Component {
 				schedule_delta,
 				recurrence,
 			} = row;
-
+			const scheduledIsDate = scheduled && Number.isInteger( scheduled.substr( 0, 4 ) );
 			return [
 				{
 					display: this.renderHook( hook ),
@@ -158,7 +158,7 @@ class ActionsReport extends Component {
 				{
 					display: (
 						<Fragment>
-						{ scheduled > '0000-00-00 00:00:00' ? <Date date={ scheduled } screenReaderFormat="F j, Y H:i:s" visibleFormat="Y-m-d H:i:s P" /> : scheduled }<br />
+						{ scheduledIsDate ? <Date date={ scheduled } screenReaderFormat="F j, Y H:i:s" visibleFormat="Y-m-d H:i:s P" /> : scheduled }<br />
 						{ schedule_delta }
 						</Fragment>
 					),
