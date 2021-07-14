@@ -36,10 +36,10 @@ class ActionScheduler_Admin {
 	 */
 	public function add_pages( $report_pages ) {
 		$report_pages[] = array(
-			'id'     => 'woocommerce-analytics-scheduled-actions',
+			'id'     => 'woocommerce-scheduled-actions',
 			'title'  => __( 'Scheduled Actions', 'action-scheduler-admin' ),
-			'parent' => 'woocommerce-analytics',
-			'path'   => '/analytics/scheduled-actions',
+			'parent' => 'woocommerce',
+			'path'   => '/scheduled-actions',
 		);
 
 		return $report_pages;
