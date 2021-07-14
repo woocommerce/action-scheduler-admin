@@ -163,7 +163,7 @@ class ActionsReport extends Component {
 				{
 					display: (
 						<Fragment>
-						{ scheduled ? <Date date={ scheduled } screenReaderFormat="F j, Y H:i:s" visibleFormat="Y-m-d H:i:s P" /> : scheduled }<br />
+						{ scheduled > '0000-00-00 00:00:00' ? <Date date={ scheduled } screenReaderFormat="F j, Y H:i:s" visibleFormat="Y-m-d H:i:s P" /> : scheduled }<br />
 						{ schedule_delta }
 						</Fragment>
 					),
