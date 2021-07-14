@@ -19,7 +19,12 @@ import Currency from '@woocommerce/currency';
  * Internal dependencies
  */
 import { statusFilters } from './config';
+
+/**
+ * Set defaults
+ */
 const showDatePicker = false;
+const DEFAULT_PER_PAGE = 100;
 
 //@todo: import './style.scss'; if necessary
 
@@ -50,7 +55,7 @@ class ActionsReport extends Component {
 			if ( query.status !== prevQuery.status ) {
 				query.orderby = 'scheduled';
 				query.order = 'asc';
-				query.per_page = prevQuery.per_page ? prevQuery.per_page : 100;
+				query.per_page = prevQuery.per_page ? prevQuery.per_page : DEFAULT_PER_PAGE;
 			}
 			this.fetchActionData( query );
 		}
