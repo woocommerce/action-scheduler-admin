@@ -285,9 +285,6 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 		];
 
 		if ( ! $schedule->next() ) {
-			if ( is_a( $schedule, 'ActionScheduler_NullSchedule' ) ) {
-				$schedule_display['date'] = '0000-00-00 00:00:00';
-			}
 			return $schedule_display;
 		}
 
