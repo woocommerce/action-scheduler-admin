@@ -93,12 +93,27 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 			'/' . $this->rest_base,
 			[
 				[
-					'methods'  => WP_REST_Server::READABLE,
-					'callback' => [ self::$instance, 'get_actions' ],
-					'args'     => $this->get_collection_params(),
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => [ self::$instance, 'get_actions' ],
+					'args'                => $this->get_collection_params(),
+					'permission_callback' => [ $this, 'get_items_permissions_check' ]
 				],
 			]
 		);
+	}
+
+	/**
+	 * Check whether a given request has permission to read.
+	 *
+	 * @param  WP_REST_Request $request Full details about the request.
+	 * @return WP_Error|boolean
+	 */
+	public function get_items_permissions_check( $request ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return new \WP_Error( 'action_scheduler_rest_cannot_view', __( 'Sorry, you cannot list resources.', 'action-scheduler-admin' ), array( 'status' => rest_authorization_required_code() ) );
+		}
+
+		return true;
 	}
 
 	/**
@@ -135,13 +150,21 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 		$status_labels = $store->get_status_labels();
 		$args          = $this->prepare_actions_query( $request );
 		$action_ids    = $store->query_actions( $args );
+		$totals        = $store->action_counts();
 		$data          = [];
+
+		if ( isset( $totals['in-progress'] ) ) {
+			$totals['inProgress'] = $totals['in-progress'];
+			unset( $totals['in-progress'] );
+		}
+
 		$response      = [
 			'pagination' => [
 				'totalRows' => (int) $store->query_actions( $args, 'count' ),
 				'perPage'   => (int) $args['per_page'],
 				'offset'    => (int) $args['offset'],
-			]
+			],
+			'totals'     => $totals
 		];
 
 		try {

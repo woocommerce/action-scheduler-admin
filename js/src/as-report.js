@@ -38,6 +38,7 @@ class ActionsReport extends Component {
 		};
 		this.getHeadersContent = this.getHeadersContent.bind( this );
 		this.getRowsContent = this.getRowsContent.bind( this );
+		this.getSummary = this.getSummary.bind( this );
 	}
 
 	componentDidMount() {
@@ -80,6 +81,7 @@ class ActionsReport extends Component {
 			this.setState( {
 				actions: response.actions,
 				pagination: response.pagination,
+				totals: response.totals,
 				loading: false,
 			} );
 		} );
@@ -124,6 +126,39 @@ class ActionsReport extends Component {
 				key: 'recurrence',
 				required: false,
 				isSortable: true,
+			},
+		];
+	}
+
+	getSummary() {
+		const { totals } = this.state;
+		const {
+			complete = 0,
+			pending = 0,
+			inProgess = 0,
+			canceled = 0,
+			failed = 0,
+		} = totals;
+		return [
+			{
+				label: __('complete', 'action-scheduler-admin' ),
+				value: complete,
+			},
+			{
+				label: __('pending', 'action-scheduler-admin' ),
+				value: pending,
+			},
+			{
+				label: __('in-progress', 'action-scheduler-admin' ),
+				value: inProgess,
+			},
+			{
+				label: __('canceled', 'action-scheduler-admin' ),
+				value: canceled,
+			},
+			{
+				label: __('failed', 'action-scheduler-admin' ),
+				value: failed,
 			},
 		];
 	}
@@ -231,7 +266,7 @@ class ActionsReport extends Component {
 	}
 
 	renderTable() {
-		const { path, query } = this.props;
+		const { query } = this.props;
 		const { perPage, totalRows } = this.state.pagination;
 
 		const rows = this.getRowsContent() || [];
@@ -247,7 +282,7 @@ class ActionsReport extends Component {
 				headers={ headers }
 				onQueryChange={ onQueryChange }
 				query={ query }
-				summary={ null }
+				summary={ this.getSummary() }
 			/>
 		);
 	}
@@ -256,28 +291,6 @@ class ActionsReport extends Component {
 		const { loading, actions } = this.state;
 		const { path, query } = this.props;
 		const currency = new Currency();
-
-		// if we aren't loading, and there are no labels
-		// show an EmptyContent message
-		if ( ! loading && ! actions.length ) {
-			return (
-				<Fragment>
-					<ReportFilters
-						currency={ currency }
-						filters={ statusFilters }
-						path={ path }
-						query={ query }
-						showDatePicker={ showDatePicker }
-					/>
-					<EmptyContent
-						title={ __( 'No results were found.', 'action-scheduler-admin' ) }
-						message={ __( 'Choose a different Action Status.', 'action-scheduler-admin' ) }
-						actionLabel=""
-						actionURL="#"
-					/>
-				</Fragment>
-			);
-		}
 
 		return (
 			<Fragment>
