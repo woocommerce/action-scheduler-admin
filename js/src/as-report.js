@@ -3,6 +3,7 @@
  * External dependencies
  */
 import apiFetch from '@wordpress/api-fetch';
+import { Card } from '@wordpress/components';
 import { Component, Fragment } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { addQueryArgs } from '@wordpress/url';
@@ -11,7 +12,7 @@ import { map } from 'lodash';
 /**
  * WooCommerce dependencies
  */
-import { Card, Date, EmptyContent, ReportFilters, TableCard, TablePlaceholder } from '@woocommerce/components';
+import { Date, ReportFilters, TableCard, TablePlaceholder } from '@woocommerce/components';
 import { getQuery, onQueryChange } from '@woocommerce/navigation';
 import Currency from '@woocommerce/currency';
 
@@ -288,7 +289,7 @@ class ActionsReport extends Component {
 	}
 
 	render() {
-		const { loading, actions } = this.state;
+		const { loading } = this.state;
 		const { path, query } = this.props;
 		const currency = new Currency();
 
