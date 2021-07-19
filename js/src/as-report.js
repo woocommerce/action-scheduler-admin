@@ -94,24 +94,28 @@ class ActionsReport extends Component {
 				label: __( 'Hook', 'action-scheduler-admin' ),
 				key: 'hook',
 				required: true,
+				isLeftAligned: true,
 				isSortable: true,
 			},
 			{
 				label: __( 'Status', 'action-scheduler-admin' ),
 				key: 'status',
 				required: false,
+				isLeftAligned: true,
 				isSortable: false,
 			},
 			{
 				label: __( 'Group', 'action-scheduler-admin' ),
 				key: 'group',
 				required: false,
+				isLeftAligned: true,
 				isSortable: true,
 			},
 			{
 				label: __( 'Arguments', 'action-scheduler-admin' ),
 				key: 'parameters',
 				required: false,
+				isLeftAligned: true,
 				isSortable: false,
 			},
 			{
@@ -120,12 +124,14 @@ class ActionsReport extends Component {
 				required: true,
 				defaultSort: true,
 				defaultOrder: 'asc',
+				isLeftAligned: true,
 				isSortable: true,
 			},
 			{
 				label: __( 'Recurrence', 'action-scheduler-admin' ),
 				key: 'recurrence',
 				required: false,
+				isLeftAligned: true,
 				isSortable: true,
 			},
 		];
