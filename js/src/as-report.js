@@ -3,7 +3,7 @@
  * External dependencies
  */
 import apiFetch from '@wordpress/api-fetch';
-import { Card } from '@wordpress/components';
+import { Card, CardFooter } from '@wordpress/components';
 import { Component, Fragment } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { addQueryArgs } from '@wordpress/url';
@@ -12,7 +12,7 @@ import { map } from 'lodash';
 /**
  * WooCommerce dependencies
  */
-import { Date, ReportFilters, TableCard, TablePlaceholder } from '@woocommerce/components';
+import { Date, ReportFilters, TableCard, TablePlaceholder, TableSummary } from '@woocommerce/components';
 import { getQuery, onQueryChange } from '@woocommerce/navigation';
 import Currency from '@woocommerce/currency';
 
@@ -132,7 +132,7 @@ class ActionsReport extends Component {
 	}
 
 	getSummary() {
-		const { totals } = this.state;
+		const { totals = {} } = this.state;
 		const {
 			complete = 0,
 			pending = 0,
@@ -262,6 +262,9 @@ class ActionsReport extends Component {
 				className="action-scheduler-admin-placeholder"
 			>
 				<TablePlaceholder caption={ __( 'Scheduled Actions', 'action-scheduler-admin' ) } headers={ headers } />
+				<CardFooter justify="center">
+					<TableSummary data={ this.getSummary() } />
+				</CardFooter>
 			</Card>
 		);
 	}
