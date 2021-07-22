@@ -3,7 +3,7 @@
  * External dependencies
  */
 import apiFetch from '@wordpress/api-fetch';
-import { Button, Card, CheckboxControl } from '@wordpress/components';
+import { Button, Card, CardFooter, CheckboxControl } from '@wordpress/components';
 import { Component, Fragment } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { addQueryArgs } from '@wordpress/url';
@@ -12,7 +12,7 @@ import { map } from 'lodash';
 /**
  * WooCommerce dependencies
  */
-import { Date, ReportFilters, TableCard, TablePlaceholder } from '@woocommerce/components';
+import { Date, ReportFilters, TableCard, TablePlaceholder, TableSummary } from '@woocommerce/components';
 import { getQuery, onQueryChange } from '@woocommerce/navigation';
 import Currency from '@woocommerce/currency';
 
@@ -37,15 +37,17 @@ class ActionsReport extends Component {
 		this.state = {
 			actions: null,
 			loading: true,
-			isBusy: true,
+			isBusy: false,
 		};
 		this.getHeadersContent = this.getHeadersContent.bind( this );
 		this.getRowsContent = this.getRowsContent.bind( this );
+		this.getSummary = this.getSummary.bind( this );
 		this.getCheckbox = this.getCheckbox.bind( this );
 		this.getAllCheckbox = this.getAllCheckbox.bind( this );
 		this.onCancel = this.onCancel.bind( this );
 		this.onRun = this.onRun.bind( this );
 		this.processAction = this.processAction.bind( this );
+		this.processSelectedActions = this.processSelectedActions.bind( this );
 		this.selectedIndex = this.selectedIndex.bind( this );
 		this.selectedAll = this.selectedAll.bind( this );
 		this.selectRow = this.selectRow.bind( this );
@@ -106,6 +108,7 @@ class ActionsReport extends Component {
 				selectedRows: [],
 				actions: response.actions,
 				pagination: response.pagination,
+				totals: response.totals,
 				loading: false,
 			} );
 		} );
@@ -130,7 +133,30 @@ class ActionsReport extends Component {
 	}
 
 	processAction( actionId, action ) {
-		this.updateActionStatus( actionId, 'Complete' );
+		apiFetch( {
+			path: `${actionsEndpoint}/${actionId}/${action}`,
+			method: 'POST',
+			data: { id: actionId },
+		} ).then( response => {
+			if ( response.status.length > 0 ) {
+				this.selectRow( actionId );
+				this.updateActionStatus( actionId, response.status );
+			}
+		} );
+	}
+
+	processSelectedActions( action ) {
+		const { selectedRows } = this.state;
+		const actionIds = [ ...selectedRows ];
+		let actionId;
+
+		if ( this.setBusy() ) {
+			while ( actionIds.length > 0 ) {
+				actionId = actionIds.shift();
+				this.processAction( actionId, action );
+			}
+		}
+		this.unsetBusy();
 	}
 
 	updateActionStatus( actionId, status ) {
@@ -146,27 +172,13 @@ class ActionsReport extends Component {
 			actions: updatedActions,
 		} );
 	}
-	onRun() {
-		const { selectedRows } = this.state;
-		const actionIds = [ ...selectedRows ];
-		let actionId;
 
-		if ( this.setBusy() ) {
-			while ( actionIds.length > 0 ) {
-				actionId = actionIds.shift();
-				this.processAction( actionId, 'run' );
-				this.setState( {
-					selectedRows: actionIds,
-				} );
-			}
-		}
-		this.unsetBusy();
+	onRun() {
+		this.processSelectedActions( 'run' );
 	}
 
 	onCancel() {
-		this.setBusy();
-		//
-		this.unsetBusy();
+		this.processSelectedActions( 'cancel' );
 	}
 
 	selectedIndex( i ) {
@@ -254,24 +266,28 @@ class ActionsReport extends Component {
 				label: __( 'Hook', 'action-scheduler-admin' ),
 				key: 'hook',
 				required: true,
+				isLeftAligned: true,
 				isSortable: true,
 			},
 			{
 				label: __( 'Status', 'action-scheduler-admin' ),
 				key: 'status',
 				required: false,
+				isLeftAligned: true,
 				isSortable: false,
 			},
 			{
 				label: __( 'Group', 'action-scheduler-admin' ),
 				key: 'group',
 				required: false,
+				isLeftAligned: true,
 				isSortable: true,
 			},
 			{
 				label: __( 'Arguments', 'action-scheduler-admin' ),
 				key: 'parameters',
 				required: false,
+				isLeftAligned: true,
 				isSortable: false,
 			},
 			{
@@ -280,13 +296,48 @@ class ActionsReport extends Component {
 				required: true,
 				defaultSort: true,
 				defaultOrder: 'asc',
+				isLeftAligned: true,
 				isSortable: true,
 			},
 			{
 				label: __( 'Recurrence', 'action-scheduler-admin' ),
 				key: 'recurrence',
 				required: false,
+				isLeftAligned: true,
 				isSortable: true,
+			},
+		];
+	}
+
+	getSummary() {
+		const { totals = {} } = this.state;
+		const {
+			complete = 0,
+			pending = 0,
+			inProgess = 0,
+			canceled = 0,
+			failed = 0,
+		} = totals;
+		return [
+			{
+				label: __('complete', 'action-scheduler-admin' ),
+				value: complete,
+			},
+			{
+				label: __('pending', 'action-scheduler-admin' ),
+				value: pending,
+			},
+			{
+				label: __('in-progress', 'action-scheduler-admin' ),
+				value: inProgess,
+			},
+			{
+				label: __('canceled', 'action-scheduler-admin' ),
+				value: canceled,
+			},
+			{
+				label: __('failed', 'action-scheduler-admin' ),
+				value: failed,
 			},
 		];
 	}
@@ -392,6 +443,9 @@ class ActionsReport extends Component {
 				className="action-scheduler-admin-placeholder"
 			>
 				<TablePlaceholder caption={ __( 'Scheduled Actions', 'action-scheduler-admin' ) } headers={ headers } />
+				<CardFooter justify="center">
+					<TableSummary data={ this.getSummary() } />
+				</CardFooter>
 			</Card>
 		);
 	}
@@ -436,13 +490,13 @@ class ActionsReport extends Component {
 				headers={ headers }
 				onQueryChange={ onQueryChange }
 				query={ query }
-				summary={ null }
+				summary={ this.getSummary() }
 			/>
 		);
 	}
 
 	render() {
-		const { loading, actions } = this.state;
+		const { loading } = this.state;
 		const { path, query } = this.props;
 		const currency = new Currency();
 
@@ -459,6 +513,6 @@ class ActionsReport extends Component {
 			</Fragment>
 		);
 	}
-};
+}
 
 export default ActionsReport;

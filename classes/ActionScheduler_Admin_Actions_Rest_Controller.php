@@ -93,10 +93,10 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 			'/' . $this->rest_base,
 			[
 				[
-					'methods'  => WP_REST_Server::READABLE,
-					'callback' => [ self::$instance, 'get_actions' ],
-					'args'     => $this->get_collection_params(),
-					'permission_callback' => [ $this, 'get_items_permissions_check' ]
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => [ self::$instance, 'get_actions' ],
+					'args'                => $this->get_collection_params(),
+					'permission_callback' => [ $this, 'get_permissions_check' ]
 				],
 			]
 		);
@@ -113,7 +113,7 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 				[
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => [ self::$instance, 'run_action' ],
-					'permission_callback' => [ self::$instance, 'get_items_permissions_check' ]
+					'permission_callback' => [ self::$instance, 'get_permissions_check' ]
 				],
 				'schema' => [ $this, 'get_public_item_schema' ],
 			]
@@ -132,7 +132,7 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => [ self::$instance, 'cancel_action' ],
 					'args'                => $this->get_collection_params(),
-					'permission_callback' => [ self::$instance, 'get_items_permissions_check' ]
+					'permission_callback' => [ self::$instance, 'get_permissions_check' ]
 				],
 				'schema' => [ $this, 'get_public_item_schema' ],
 			]
@@ -140,16 +140,16 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 	}
 
 	/**
-	 * Check whether a given request has permission to read.
+	 * Check whether a given request has permission to access.
 	 *
 	 * @param  WP_REST_Request $request Full details about the request.
 	 * @return WP_Error|boolean
 	 */
-	public function get_items_permissions_check( $request ) {
-/*		if ( ! current_user_can( 'manage_options' ) ) {
+	public function get_permissions_check( $request ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return new \WP_Error( 'action_scheduler_rest_cannot_view', __( 'Sorry, you cannot list resources.', 'action-scheduler-admin' ), array( 'status' => rest_authorization_required_code() ) );
 		}
-*/
+
 		return true;
 	}
 
@@ -187,13 +187,21 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 		$status_labels = $store->get_status_labels();
 		$args          = $this->prepare_actions_query( $request );
 		$action_ids    = $store->query_actions( $args );
+		$totals        = $store->action_counts();
 		$data          = [];
+
+		if ( isset( $totals['in-progress'] ) ) {
+			$totals['inProgress'] = $totals['in-progress'];
+			unset( $totals['in-progress'] );
+		}
+
 		$response      = [
 			'pagination' => [
 				'totalRows' => (int) $store->query_actions( $args, 'count' ),
 				'perPage'   => (int) $args['per_page'],
 				'offset'    => (int) $args['offset'],
-			]
+			],
+			'totals'     => $totals
 		];
 
 		try {
@@ -234,7 +242,7 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 				'id'             => $action_id,
 				'hook'           => $action->get_hook(),
 				'group'          => $action->get_group(),
-				'status'         => isset( $status_labels[ $status ] ) ? $status_labels[ $status ] : $status,
+				'status'         => $this->get_status_display( $status ),
 				'timestamp'      => $schedule_display['timestamp'],
 				'scheduled'      => $schedule_display['date'],
 				'schedule_delta' => $schedule_display['delta'],
@@ -262,16 +270,29 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 		return rest_ensure_response( $response );
 	}
 
+	/**
+	 * Run an action.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
 	public function run_action( $request ) {
+		$store  = ActionScheduler::store();
+		$runner = ActionScheduler::runner();
 		if ( ! empty( $request['id'] ) ) {
 			try {
-				ActionScheduler::runner()->process_action( $request['id'], 'REST API' );
-				$response = [ 'status' => 'Success' ];
+				$runner->process_action( $request['id'], 'REST API' );
+				$response = [ 'message' => 'Success' ];
 			} catch ( Exception $e ) {
-				$response = [ 'status' => $e->getMessage() ];
+				$response = [ 'message' => $e->getMessage() ];
 			}
+			$status = $store->get_status( $request['id'] );
+			$response['status'] = $this->get_status_display( $status );
 		} else {
-			$response = [ 'status' => 'not found' ];
+			$response = [
+				'message' => 'Not found',
+				'status' => ''
+			];
 		}
 		return rest_ensure_response( $response );
 	}
@@ -283,19 +304,26 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function cancel_action( $request ) {
+		$store = ActionScheduler::store();
+
 		if ( ! empty( $request['id'] ) ) {
 			try {
 				if ( ActionScheduler::store()->get_status( $request['id'] ) !== ActionScheduler_Store::STATUS_PENDING ) {
-					$response = [ 'status' => 'Action was not canceled' ];
+					$response = [ 'message' => 'Action was not canceled' ];
 				} else {
 					ActionScheduler::store()->cancel_action( $request['id'] );
-					$response = [ 'status' => 'Success' ];
+					$response = [ 'message' => 'Success' ];
 				}
 			} catch ( Exception $e ) {
-				$response = [ 'status' => $e->getMessage() ];
+				$response = [ 'message' => $e->getMessage() ];
 			}
+			$status = $store->get_status( $request['id'] );
+			$response['status'] = $this->get_status_display( $status );
 		} else {
-			$response = [ 'status' => 'not found' ];
+			$response = [
+				'message' => 'Not found',
+				'status' => ''
+			];
 		}
 		return rest_ensure_response( $response );
 	}
@@ -335,6 +363,13 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 		}
 
 		return $output;
+	}
+
+	protected function get_status_display( $status ) {
+		$store         = ActionScheduler::store();
+		$status_labels = $store->get_status_labels();
+
+		return isset( $status_labels[ $status ] ) ? $status_labels[ $status ] : $status;
 	}
 
 	/**
