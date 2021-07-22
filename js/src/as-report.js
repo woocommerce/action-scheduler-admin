@@ -3,6 +3,7 @@
  * External dependencies
  */
 import apiFetch from '@wordpress/api-fetch';
+import { Card, CardFooter } from '@wordpress/components';
 import { Component, Fragment } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { addQueryArgs } from '@wordpress/url';
@@ -11,7 +12,7 @@ import { map } from 'lodash';
 /**
  * WooCommerce dependencies
  */
-import { Card, Date, EmptyContent, ReportFilters, TableCard, TablePlaceholder } from '@woocommerce/components';
+import { Date, ReportFilters, TableCard, TablePlaceholder, TableSummary } from '@woocommerce/components';
 import { getQuery, onQueryChange } from '@woocommerce/navigation';
 import Currency from '@woocommerce/currency';
 
@@ -38,6 +39,7 @@ class ActionsReport extends Component {
 		};
 		this.getHeadersContent = this.getHeadersContent.bind( this );
 		this.getRowsContent = this.getRowsContent.bind( this );
+		this.getSummary = this.getSummary.bind( this );
 	}
 
 	componentDidMount() {
@@ -80,6 +82,7 @@ class ActionsReport extends Component {
 			this.setState( {
 				actions: response.actions,
 				pagination: response.pagination,
+				totals: response.totals,
 				loading: false,
 			} );
 		} );
@@ -91,24 +94,28 @@ class ActionsReport extends Component {
 				label: __( 'Hook', 'action-scheduler-admin' ),
 				key: 'hook',
 				required: true,
+				isLeftAligned: true,
 				isSortable: true,
 			},
 			{
 				label: __( 'Status', 'action-scheduler-admin' ),
 				key: 'status',
 				required: false,
+				isLeftAligned: true,
 				isSortable: false,
 			},
 			{
 				label: __( 'Group', 'action-scheduler-admin' ),
 				key: 'group',
 				required: false,
+				isLeftAligned: true,
 				isSortable: true,
 			},
 			{
 				label: __( 'Arguments', 'action-scheduler-admin' ),
 				key: 'parameters',
 				required: false,
+				isLeftAligned: true,
 				isSortable: false,
 			},
 			{
@@ -117,13 +124,48 @@ class ActionsReport extends Component {
 				required: true,
 				defaultSort: true,
 				defaultOrder: 'asc',
+				isLeftAligned: true,
 				isSortable: true,
 			},
 			{
 				label: __( 'Recurrence', 'action-scheduler-admin' ),
 				key: 'recurrence',
 				required: false,
+				isLeftAligned: true,
 				isSortable: true,
+			},
+		];
+	}
+
+	getSummary() {
+		const { totals = {} } = this.state;
+		const {
+			complete = 0,
+			pending = 0,
+			inProgess = 0,
+			canceled = 0,
+			failed = 0,
+		} = totals;
+		return [
+			{
+				label: __('complete', 'action-scheduler-admin' ),
+				value: complete,
+			},
+			{
+				label: __('pending', 'action-scheduler-admin' ),
+				value: pending,
+			},
+			{
+				label: __('in-progress', 'action-scheduler-admin' ),
+				value: inProgess,
+			},
+			{
+				label: __('canceled', 'action-scheduler-admin' ),
+				value: canceled,
+			},
+			{
+				label: __('failed', 'action-scheduler-admin' ),
+				value: failed,
 			},
 		];
 	}
@@ -226,12 +268,15 @@ class ActionsReport extends Component {
 				className="action-scheduler-admin-placeholder"
 			>
 				<TablePlaceholder caption={ __( 'Scheduled Actions', 'action-scheduler-admin' ) } headers={ headers } />
+				<CardFooter justify="center">
+					<TableSummary data={ this.getSummary() } />
+				</CardFooter>
 			</Card>
 		);
 	}
 
 	renderTable() {
-		const { path, query } = this.props;
+		const { query } = this.props;
 		const { perPage, totalRows } = this.state.pagination;
 
 		const rows = this.getRowsContent() || [];
@@ -247,37 +292,15 @@ class ActionsReport extends Component {
 				headers={ headers }
 				onQueryChange={ onQueryChange }
 				query={ query }
-				summary={ null }
+				summary={ this.getSummary() }
 			/>
 		);
 	}
 
 	render() {
-		const { loading, actions } = this.state;
+		const { loading } = this.state;
 		const { path, query } = this.props;
 		const currency = new Currency();
-
-		// if we aren't loading, and there are no labels
-		// show an EmptyContent message
-		if ( ! loading && ! actions.length ) {
-			return (
-				<Fragment>
-					<ReportFilters
-						currency={ currency }
-						filters={ statusFilters }
-						path={ path }
-						query={ query }
-						showDatePicker={ showDatePicker }
-					/>
-					<EmptyContent
-						title={ __( 'No results were found.', 'action-scheduler-admin' ) }
-						message={ __( 'Choose a different Action Status.', 'action-scheduler-admin' ) }
-						actionLabel=""
-						actionURL="#"
-					/>
-				</Fragment>
-			);
-		}
 
 		return (
 			<Fragment>
