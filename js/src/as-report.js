@@ -3,7 +3,7 @@
  * External dependencies
  */
 import apiFetch from '@wordpress/api-fetch';
-import { Card, CardFooter } from '@wordpress/components';
+import { Button, Card, CardFooter, CheckboxControl } from '@wordpress/components';
 import { Component, Fragment } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { addQueryArgs } from '@wordpress/url';
@@ -24,6 +24,7 @@ import { statusFilters } from './config';
 /**
  * Set defaults
  */
+const actionsEndpoint = `asa/v1/actions`;
 const showDatePicker = false;
 const DEFAULT_PER_PAGE = 100;
 
@@ -36,10 +37,24 @@ class ActionsReport extends Component {
 		this.state = {
 			actions: null,
 			loading: true,
+			isBusy: false,
 		};
 		this.getHeadersContent = this.getHeadersContent.bind( this );
 		this.getRowsContent = this.getRowsContent.bind( this );
 		this.getSummary = this.getSummary.bind( this );
+		this.getCheckbox = this.getCheckbox.bind( this );
+		this.getAllCheckbox = this.getAllCheckbox.bind( this );
+		this.onCancel = this.onCancel.bind( this );
+		this.onRun = this.onRun.bind( this );
+		this.processAction = this.processAction.bind( this );
+		this.processSelectedActions = this.processSelectedActions.bind( this );
+		this.selectedIndex = this.selectedIndex.bind( this );
+		this.selectedAll = this.selectedAll.bind( this );
+		this.selectRow = this.selectRow.bind( this );
+		this.selectAllRows = this.selectAllRows.bind( this );
+		this.setBusy = this.setBusy.bind( this );
+		this.unsetBusy = this.unsetBusy.bind( this );
+		this.updateActionStatus = this.updateActionStatus.bind( this );
 	}
 
 	componentDidMount() {
@@ -64,8 +79,6 @@ class ActionsReport extends Component {
 	}
 
 	fetchActionData( query ) {
-		const actionsEndpoint = `asa/v1/actions`;
-
 		var fullQuery = Object.assign( {
 				orderby: 'scheduled',
 				order: 'asc',
@@ -78,18 +91,177 @@ class ActionsReport extends Component {
 			fullQuery.status = '';
 		}
 
+		if ( ! this.setBusy() ) {
+			return;
+		}
+
 		apiFetch( { path: addQueryArgs( actionsEndpoint, fullQuery ) } ).then( response => {
+			var enabledRows = map( response.actions, action => {
+				if ( action.status == 'Pending' ) {
+					return action.id;
+				} else {
+					return null;
+				}
+			} ).filter( id => id != null );
 			this.setState( {
+				enabledRows,
+				selectedRows: [],
 				actions: response.actions,
 				pagination: response.pagination,
 				totals: response.totals,
 				loading: false,
 			} );
 		} );
+		this.unsetBusy();
+	}
+
+	setBusy() {
+		const { isBusy } = this.state;
+		if ( isBusy ) {
+			return false;
+		}
+		this.setState( {
+			isBusy: true,
+		} );
+		return true;
+	}
+
+	unsetBusy() {
+		this.setState( {
+			isBusy: false,
+		} );
+	}
+
+	processAction( actionId, action ) {
+		apiFetch( {
+			path: `${actionsEndpoint}/${actionId}/${action}`,
+			method: 'POST',
+			data: { id: actionId },
+		} ).then( response => {
+			if ( response.status.length > 0 ) {
+				this.selectRow( actionId );
+				this.updateActionStatus( actionId, response.status );
+			}
+		} );
+	}
+
+	processSelectedActions( action ) {
+		const { selectedRows } = this.state;
+		const actionIds = [ ...selectedRows ];
+		let actionId;
+
+		if ( this.setBusy() ) {
+			while ( actionIds.length > 0 ) {
+				actionId = actionIds.shift();
+				this.processAction( actionId, action );
+			}
+		}
+		this.unsetBusy();
+	}
+
+	updateActionStatus( actionId, status ) {
+		const { actions } = this.state;
+
+		const updatedActions = map( actions, action => {
+			if ( action.id == actionId ) {
+				action.status = status;
+			}
+			return action;
+		} );
+		this.setState( {
+			actions: updatedActions,
+		} );
+	}
+
+	onRun() {
+		this.processSelectedActions( 'run' );
+	}
+
+	onCancel() {
+		this.processSelectedActions( 'cancel' );
+	}
+
+	selectedIndex( i ) {
+		const { selectedRows } = this.state;
+		if ( ! selectedRows ) {
+			return false;
+		}
+
+		return selectedRows.findIndex( ( id ) => id == i );
+	}
+
+	selectedAll() {
+		const { enabledRows, selectedRows } = this.state;
+		if ( ! enabledRows || ! selectedRows ) {
+			return false;
+		}
+		return enabledRows.length > 0 && selectedRows.length == enabledRows.length;
+	}
+
+	selectRow( i ) {
+		const { selectedRows } = this.state;
+		const found = this.selectedIndex( i );
+		let newRows = [];
+
+		if ( found >= 0 ) {
+			newRows = [
+				...selectedRows.slice( 0, found ),
+				...selectedRows.slice( found + 1 ),
+			];
+		} else {
+			newRows = [
+				...selectedRows,
+				i,
+			];
+		}
+		newRows.sort();
+
+		this.setState( {
+			selectedRows: newRows,
+		} );
+	}
+
+	selectAllRows() {
+		const { enabledRows } = this.state;
+		let newRows = this.selectedAll() ? [] : [ ...enabledRows ];
+		this.setState( {
+			selectedRows: newRows,
+		} );
+	}
+
+	getCheckbox( i, enabled ) {
+		const isChecked = this.selectedIndex( i ) >= 0;
+		return {
+			display: (
+				<CheckboxControl
+					onChange={ () => this.selectRow( i ) }
+					disabled={ ! enabled }
+					checked={ isChecked }
+				/>
+			),
+			value: false,
+		};
+	}
+
+	getAllCheckbox() {
+		return {
+			cellClassName: 'is-checkbox-column',
+			key: 'compare',
+			label: (
+				<CheckboxControl
+					onChange={ this.selectAllRows }
+					aria-label={ __( 'Select All' ) }
+					checked={ this.selectedAll() }
+				/>
+			),
+			required: true,
+		};
+
 	}
 
 	getHeadersContent() {
 		return [
+			this.getAllCheckbox(),
 			{
 				label: __( 'Hook', 'action-scheduler-admin' ),
 				key: 'hook',
@@ -175,6 +347,7 @@ class ActionsReport extends Component {
 
 		return map( actions, row => {
 			const {
+				id,
 				hook,
 				group,
 				status,
@@ -185,7 +358,9 @@ class ActionsReport extends Component {
 				recurrence,
 			} = row;
 			const scheduledIsDate = scheduled && Number.isInteger( scheduled.substr( 0, 4 ) );
+			const isPending = status == 'Pending';
 			return [
+				this.getCheckbox( id, isPending ),
 				{
 					display: this.renderHook( hook ),
 					value: hook,
@@ -278,13 +453,36 @@ class ActionsReport extends Component {
 	renderTable() {
 		const { query } = this.props;
 		const { perPage, totalRows } = this.state.pagination;
+		const { isBusy, selectedRows } = this.state;
 
 		const rows = this.getRowsContent() || [];
-
+		const buttonsEnabled = ! isBusy && selectedRows && selectedRows.length;
 		const headers = this.getHeadersContent();
 
 		return (
 			<TableCard
+				actions ={ [
+					(
+						<Button
+							key={ 'run' }
+							className={ 'is-primary' }
+							text={ __( 'Run Selected', 'action-scheduler-admin' ) }
+							onClick={ this.onRun }
+							disabled={ ! buttonsEnabled }
+							variant={ 'primary' }
+						/>
+					),
+					(
+						<Button
+							key={ 'cancel' }
+							className={ 'is-secondary' }
+							text={ __( 'Cancel Selected', 'action-scheduler-admin' ) }
+							onClick={ this.onCancel }
+							disabled={ ! buttonsEnabled }
+							variant={ 'secondary' }
+						/>
+					),
+				] }
 				title={ __( 'Scheduled Actions', 'action-scheduler-admin' ) }
 				rows={ rows }
 				totalRows={ totalRows }
@@ -315,6 +513,6 @@ class ActionsReport extends Component {
 			</Fragment>
 		);
 	}
-};
+}
 
 export default ActionsReport;
