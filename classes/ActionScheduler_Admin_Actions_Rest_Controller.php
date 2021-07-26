@@ -279,21 +279,24 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 	public function run_action( $request ) {
 		$store  = ActionScheduler::store();
 		$runner = ActionScheduler::runner();
-		if ( ! empty( $request['id'] ) ) {
-			try {
-				$runner->process_action( $request['id'], 'REST API' );
-				$response = [ 'message' => 'Success' ];
-			} catch ( Exception $e ) {
-				$response = [ 'message' => $e->getMessage() ];
-			}
-			$status = $store->get_status( $request['id'] );
-			$response['status'] = $this->get_status_display( $status );
-		} else {
+
+		if ( empty( $request['id'] ) ) {
 			$response = [
 				'message' => 'Not found',
 				'status' => ''
 			];
+			return rest_ensure_response( $response );
 		}
+
+		try {
+			$runner->process_action( $request['id'], 'REST API' );
+			$response = [ 'message' => 'Success' ];
+		} catch ( Exception $e ) {
+			$response = [ 'message' => $e->getMessage() ];
+		}
+		$status = $store->get_status( $request['id'] );
+		$response['status'] = $this->get_status_display( $status );
+
 		return rest_ensure_response( $response );
 	}
 
@@ -311,7 +314,7 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 				'message' => 'Not found',
 				'status' => ''
 			];
-			return rest_ensure_response( $response )
+			return rest_ensure_response( $response );
 		}
 
 		try {
@@ -366,6 +369,12 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 		return $output;
 	}
 
+	/**
+	 * Lookup a status title using a status code.
+	 *
+	 * @param $status Status code.
+	 * @return string
+	 */
 	protected function get_status_display( $status ) {
 		$store         = ActionScheduler::store();
 		$status_labels = $store->get_status_labels();
