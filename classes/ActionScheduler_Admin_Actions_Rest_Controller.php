@@ -11,7 +11,7 @@ if ( ! class_exists( 'WC_REST_CRUD_Controller' ) ) {
  *
  * Class ActionScheduler_Actions_Rest_Controller
  */
-class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Controller {
+class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 	/**
 	 * Endpoint namespace.
 	 *
@@ -96,19 +96,56 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => [ self::$instance, 'get_actions' ],
 					'args'                => $this->get_collection_params(),
-					'permission_callback' => [ $this, 'get_items_permissions_check' ]
+					'permission_callback' => [ $this, 'get_permissions_check' ]
 				],
+			]
+		);
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/run',
+			[
+				'args' => [
+					'id' => [
+						'description' => __( 'Unique identifier for the resource.', 'action-scheduler-admin' ),
+						'type'        => 'integer',
+					],
+				],
+				[
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => [ self::$instance, 'run_action' ],
+					'permission_callback' => [ self::$instance, 'get_permissions_check' ]
+				],
+				'schema' => [ $this, 'get_public_item_schema' ],
+			]
+		);
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/cancel',
+			[
+				'args' => [
+					'id' => [
+						'description' => __( 'Unique identifier for the resource.', 'action-scheduler-admin' ),
+						'type'        => 'integer',
+					],
+				],
+				[
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => [ self::$instance, 'cancel_action' ],
+					'args'                => $this->get_collection_params(),
+					'permission_callback' => [ self::$instance, 'get_permissions_check' ]
+				],
+				'schema' => [ $this, 'get_public_item_schema' ],
 			]
 		);
 	}
 
 	/**
-	 * Check whether a given request has permission to read.
+	 * Check whether a given request has permission to access.
 	 *
 	 * @param  WP_REST_Request $request Full details about the request.
 	 * @return WP_Error|boolean
 	 */
-	public function get_items_permissions_check( $request ) {
+	public function get_permissions_check( $request ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return new \WP_Error( 'action_scheduler_rest_cannot_view', __( 'Sorry, you cannot list resources.', 'action-scheduler-admin' ), array( 'status' => rest_authorization_required_code() ) );
 		}
@@ -205,7 +242,7 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 				'id'             => $action_id,
 				'hook'           => $action->get_hook(),
 				'group'          => $action->get_group(),
-				'status'         => isset( $status_labels[ $status ] ) ? $status_labels[ $status ] : $status,
+				'status'         => $this->get_status_display( $status ),
 				'timestamp'      => $schedule_display['timestamp'],
 				'scheduled'      => $schedule_display['date'],
 				'schedule_delta' => $schedule_display['delta'],
@@ -233,6 +270,67 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 		return rest_ensure_response( $response );
 	}
 
+	/**
+	 * Run an action.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function run_action( $request ) {
+		$store  = ActionScheduler::store();
+		$runner = ActionScheduler::runner();
+
+		if ( empty( $request['id'] ) ) {
+			$response = [
+				'message' => 'Not found',
+				'status' => ''
+			];
+			return rest_ensure_response( $response );
+		}
+
+		try {
+			$runner->process_action( $request['id'], 'REST API' );
+			$response = [ 'message' => 'Success' ];
+		} catch ( Exception $e ) {
+			$response = [ 'message' => $e->getMessage() ];
+		}
+		$status = $store->get_status( $request['id'] );
+		$response['status'] = $this->get_status_display( $status );
+
+		return rest_ensure_response( $response );
+	}
+
+	/**
+	 * Cancel an action.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function cancel_action( $request ) {
+		$store = ActionScheduler::store();
+
+		if ( empty( $request['id'] ) ) {
+			$response = [
+				'message' => 'Not found',
+				'status' => ''
+			];
+			return rest_ensure_response( $response );
+		}
+
+		try {
+			if ( ActionScheduler::store()->get_status( $request['id'] ) !== ActionScheduler_Store::STATUS_PENDING ) {
+				$response = [ 'message' => 'Action was not canceled' ];
+			} else {
+				ActionScheduler::store()->cancel_action( $request['id'] );
+				$response = [ 'message' => 'Success' ];
+			}
+		} catch ( Exception $e ) {
+			$response = [ 'message' => $e->getMessage() ];
+		}
+		$status = $store->get_status( $request['id'] );
+		$response['status'] = $this->get_status_display( $status );
+		return rest_ensure_response( $response );
+	}
 	/**
 	 * Convert an interval of seconds into a two part human friendly string.
 	 *
@@ -269,6 +367,19 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 		}
 
 		return $output;
+	}
+
+	/**
+	 * Lookup a status title using a status code.
+	 *
+	 * @param $status Status code.
+	 * @return string
+	 */
+	protected function get_status_display( $status ) {
+		$store         = ActionScheduler::store();
+		$status_labels = $store->get_status_labels();
+
+		return isset( $status_labels[ $status ] ) ? $status_labels[ $status ] : $status;
 	}
 
 	/**
@@ -336,6 +447,13 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 		$stati[] = '';
 
 		$params = [
+			'id' => [
+				'type'              => 'integer',
+				'default'           => 0,
+				'sanitize_callback' => 'absint',
+				'validate_callback' => 'rest_validate_request_arg',
+				'minimum'           => 0,
+			],
 			'paged' => [
 				'type'              => 'integer',
 				'default'           => 0,
@@ -384,5 +502,28 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WC_REST_CRUD_Control
 		];
 
 		return $params;
+	}
+
+	/**
+	 * Get the Action's schema, conforming to JSON Schema.
+	 *
+	 * @return array
+	 */
+	public function get_item_schema() {
+		$schema = [
+			'$schema' => 'http://json-schema.org/draft-04/schema#',
+			'title' => 'scheduled_action',
+			'type' => 'object',
+			'properties' => [
+				'id' => [
+					'description' => __( 'Unique identifier for the resource.', 'action-scheduler-admin' ),
+					'type' => 'integer',
+					'context' => [ 'edit' ],
+					'readonly' => true,
+				],
+			],
+		];
+
+		return $schema;
 	}
 }
