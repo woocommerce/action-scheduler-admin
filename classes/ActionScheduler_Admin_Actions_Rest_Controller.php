@@ -306,25 +306,26 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 	public function cancel_action( $request ) {
 		$store = ActionScheduler::store();
 
-		if ( ! empty( $request['id'] ) ) {
-			try {
-				if ( ActionScheduler::store()->get_status( $request['id'] ) !== ActionScheduler_Store::STATUS_PENDING ) {
-					$response = [ 'message' => 'Action was not canceled' ];
-				} else {
-					ActionScheduler::store()->cancel_action( $request['id'] );
-					$response = [ 'message' => 'Success' ];
-				}
-			} catch ( Exception $e ) {
-				$response = [ 'message' => $e->getMessage() ];
-			}
-			$status = $store->get_status( $request['id'] );
-			$response['status'] = $this->get_status_display( $status );
-		} else {
+		if ( empty( $request['id'] ) ) {
 			$response = [
 				'message' => 'Not found',
 				'status' => ''
 			];
+			return rest_ensure_response( $response )
 		}
+
+		try {
+			if ( ActionScheduler::store()->get_status( $request['id'] ) !== ActionScheduler_Store::STATUS_PENDING ) {
+				$response = [ 'message' => 'Action was not canceled' ];
+			} else {
+				ActionScheduler::store()->cancel_action( $request['id'] );
+				$response = [ 'message' => 'Success' ];
+			}
+		} catch ( Exception $e ) {
+			$response = [ 'message' => $e->getMessage() ];
+		}
+		$status = $store->get_status( $request['id'] );
+		$response['status'] = $this->get_status_display( $status );
 		return rest_ensure_response( $response );
 	}
 	/**
