@@ -17,6 +17,7 @@ class ActionScheduler_Admin {
 
 		return self::$instance;
 	}
+
 	/**
 	 * Initialize the plugin.
 	 */
@@ -49,11 +50,12 @@ class ActionScheduler_Admin {
 	 * Register REST API end points.
 	 */
 	public function register_api_endpoints() {
-		if ( class_exists( 'WC_REST_CRUD_Controller' ) ) {
+		if ( class_exists( 'WP_REST_Controller' ) ) {
 			require_once( __DIR__ . '/ActionScheduler_Admin_Actions_Rest_Controller.php' );
 			ActionScheduler_Admin_Actions_Rest_Controller::factory()->register_routes();
 		}
 	}
+
 	/**
 	 * Register the JS.
 	 */
@@ -76,6 +78,7 @@ class ActionScheduler_Admin {
 			'after'
 		);
 	}
+
 	/**
 	 * Enqueue the scripts.
 	 */

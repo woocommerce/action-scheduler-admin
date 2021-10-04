@@ -41,6 +41,6 @@ addFilter( 'woocommerce_admin_pages_list', 'scheduled-actions-report-filter', re
 addFilter( 'woocommerce_admin_time_excluded_screens', 'scheduled-actions-date-filter', pages => {
   return [
     ...pages,
-	'scheduled-actions'
+	'scheduled-actions',
   ];
 } );

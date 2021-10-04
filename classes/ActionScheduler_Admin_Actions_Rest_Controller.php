@@ -2,7 +2,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! class_exists( 'WC_REST_CRUD_Controller' ) ) {
+if ( ! class_exists( 'WP_REST_Controller' ) ) {
 	return;
 }
 
