@@ -28,10 +28,15 @@ const actionsEndpoint = `asa/v1/actions`;
 const showDatePicker = false;
 const DEFAULT_PER_PAGE = 100;
 
-//@todo: import './style.scss'; if necessary
-
+/**
+ * Action Scheduler admin screen component
+ */
 class ActionsReport extends Component {
-
+	/**
+	 * Component constructor.
+	 *
+	 * @param props {object} Component properties.
+	 */
 	constructor( props ) {
 		super( props );
 		this.state = {
@@ -39,11 +44,13 @@ class ActionsReport extends Component {
 			loading: true,
 			isBusy: false,
 		};
+		/**
+		 * Bind the handlers to this instance of the component.
+		 */
 		this.getHeadersContent = this.getHeadersContent.bind( this );
 		this.getRowsContent = this.getRowsContent.bind( this );
 		this.getSummary = this.getSummary.bind( this );
 		this.getCheckbox = this.getCheckbox.bind( this );
-		this.getAllCheckbox = this.getAllCheckbox.bind( this );
 		this.onCancel = this.onCancel.bind( this );
 		this.onRun = this.onRun.bind( this );
 		this.processAction = this.processAction.bind( this );
@@ -57,6 +64,9 @@ class ActionsReport extends Component {
 		this.updateActionStatus = this.updateActionStatus.bind( this );
 	}
 
+	/**
+	 * React runs `componentDidMount` if it exists when a component has been loaded in the client browser.
+	 */
 	componentDidMount() {
 		apiFetch.use( apiFetch.createNonceMiddleware( asaSettings.nonce ) );
 		apiFetch.use( apiFetch.createRootURLMiddleware( asaSettings.api_root ) );
@@ -64,6 +74,11 @@ class ActionsReport extends Component {
 		this.fetchActionData( getQuery() );
 	}
 
+	/**
+	 * React runs `componentDidUpdate` when the app has changes in properties.
+	 *
+	 * @param prevProps {object} Properties prior to the change.
+	 */
 	componentDidUpdate( prevProps ) {
 		const prevQuery = prevProps.query;
 		const query = this.props.query;
@@ -78,6 +93,11 @@ class ActionsReport extends Component {
 		}
 	}
 
+	/**
+	 * Retrieve action data from the REST API endpoint.
+	 *
+	 * @param query {object} Query object parameters as named key => value pairs.
+	 */
 	fetchActionData( query ) {
 		var fullQuery = Object.assign( {
 				orderby: 'scheduled',
@@ -115,6 +135,11 @@ class ActionsReport extends Component {
 		this.unsetBusy();
 	}
 
+	/**
+	 * Set the busy state flag indicating there is an api call in progress.
+	 *
+	 * @returns {boolean} Flag indicating whether it is safe to call the api.
+	 */
 	setBusy() {
 		const { isBusy } = this.state;
 		if ( isBusy ) {
@@ -126,12 +151,21 @@ class ActionsReport extends Component {
 		return true;
 	}
 
+	/**
+	 * Clear the busy state flag indicating there isn't an api call in progress.
+	 */
 	unsetBusy() {
 		this.setState( {
 			isBusy: false,
 		} );
 	}
 
+	/**
+	 * Call the API to process or cancel an action.
+	 *
+	 * @param actionId {number} Id of the action.
+	 * @param action   {string} Action to perform (process|cancel).
+	 */
 	processAction( actionId, action ) {
 		apiFetch( {
 			path: `${actionsEndpoint}/${actionId}/${action}`,
@@ -145,6 +179,11 @@ class ActionsReport extends Component {
 		} );
 	}
 
+	/**
+	 * Determine list of selected actions to process. Process those actions.
+	 *
+	 * @param action {string} Action to perform (process|cancel).
+	 */
 	processSelectedActions( action ) {
 		const { selectedRows } = this.state;
 		const actionIds = [ ...selectedRows ];
@@ -159,6 +198,12 @@ class ActionsReport extends Component {
 		this.unsetBusy();
 	}
 
+	/**
+	 * Update an actions status in the report table.
+	 *
+	 * @param actionId {number} The ID of the action.
+	 * @param status   {string} The new status of the action.
+	 */
 	updateActionStatus( actionId, status ) {
 		const { actions } = this.state;
 
@@ -173,14 +218,26 @@ class ActionsReport extends Component {
 		} );
 	}
 
+	/**
+	 * Run button click handler.
+	 */
 	onRun() {
 		this.processSelectedActions( 'run' );
 	}
 
+	/**
+	 * Cancel button click handler.
+	 */
 	onCancel() {
 		this.processSelectedActions( 'cancel' );
 	}
 
+	/**
+	 * Determine whether an action is currently selected.
+	 *
+	 * @param i {number} Action ID.
+	 * @returns {boolean}
+	 */
 	selectedIndex( i ) {
 		const { selectedRows } = this.state;
 		if ( ! selectedRows ) {
@@ -190,6 +247,11 @@ class ActionsReport extends Component {
 		return selectedRows.findIndex( ( id ) => id == i );
 	}
 
+	/**
+	 * Determine whether all actions are currently selected.
+	 *
+	 * @returns {boolean}
+	 */
 	selectedAll() {
 		const { enabledRows, selectedRows } = this.state;
 		if ( ! enabledRows || ! selectedRows ) {
@@ -198,6 +260,11 @@ class ActionsReport extends Component {
 		return enabledRows.length > 0 && selectedRows.length == enabledRows.length;
 	}
 
+	/**
+	 * Toggle the selection of a row.
+	 *
+	 * @param i {number} Action ID.
+	 */
 	selectRow( i ) {
 		const { selectedRows } = this.state;
 		const found = this.selectedIndex( i );
@@ -221,6 +288,9 @@ class ActionsReport extends Component {
 		} );
 	}
 
+	/**
+	 * Select all rows. Or unselect all rows when all rows are currently selected.
+	 */
 	selectAllRows() {
 		const { enabledRows } = this.state;
 		let newRows = this.selectedAll() ? [] : [ ...enabledRows ];
@@ -229,6 +299,13 @@ class ActionsReport extends Component {
 		} );
 	}
 
+	/**
+	 * Get the checkbox control for an action row.
+	 *
+	 * @param i       {number} Action ID.
+	 * @param enabled {boolean} Whether the checkbox should be enabled.
+	 * @returns {{display: JSX.Element, value: boolean}}
+	 */
 	getCheckbox( i, enabled ) {
 		const isChecked = this.selectedIndex( i ) >= 0;
 		return {
@@ -243,25 +320,25 @@ class ActionsReport extends Component {
 		};
 	}
 
-	getAllCheckbox() {
-		return {
-			cellClassName: 'is-checkbox-column',
-			key: 'compare',
-			label: (
-				<CheckboxControl
-					onChange={ this.selectAllRows }
-					aria-label={ __( 'Select All' ) }
-					checked={ this.selectedAll() }
-				/>
-			),
-			required: true,
-		};
-
-	}
-
+	/**
+	 * Get the table header row.
+	 *
+	 * @returns {[{Object}]} Object array of header cell properties.
+	 */
 	getHeadersContent() {
 		return [
-			this.getAllCheckbox(),
+			{
+				cellClassName: 'is-checkbox-column',
+				key: 'compare',
+				label: (
+					<CheckboxControl
+						onChange={ this.selectAllRows }
+						aria-label={ __( 'Select All' ) }
+						checked={ this.selectedAll() }
+					/>
+				),
+				required: true,
+			},
 			{
 				label: __( 'Hook', 'action-scheduler-admin' ),
 				key: 'hook',
@@ -309,6 +386,11 @@ class ActionsReport extends Component {
 		];
 	}
 
+	/**
+	 * Get the summary row for the table footer.
+	 *
+	 * @returns {[{label: string, value: number}]} Object array of summary values.
+	 */
 	getSummary() {
 		const { totals = {} } = this.state;
 		const {
@@ -342,6 +424,11 @@ class ActionsReport extends Component {
 		];
 	}
 
+	/**
+	 * Get a table row for an individual action.
+	 *
+	 * @returns {[[{Object}]]} A table of rows of action properties.
+	 */
 	getRowsContent() {
 		const { actions } = this.state;
 
@@ -394,18 +481,23 @@ class ActionsReport extends Component {
 		} );
 	}
 
-	renderParameter( parameter, i ) {
-		return (
-			<li key={i}>{ parameter }</li>
-		);
-	}
-
+	/**
+	 * Render an action's parameter list as an unordered list.
+	 *
+	 * @param parameters {[mixed]} Action parameter array.
+	 * @returns {JSX.Element|null}
+	 */
 	renderParameterList( parameters ) {
 		if ( ! parameters.length ) {
 			return null;
 		}
 
-		var list = map( parameters, this.renderParameter );
+		var list = map( parameters, ( parameter, i ) => {
+			return (
+				<li key={i}>{ parameter }</li>
+			);
+		} );
+
 		return (
 			<Fragment>
 			<ul>
@@ -416,6 +508,12 @@ class ActionsReport extends Component {
 
 	}
 
+	/**
+	 * Render the hook parameter. Use multiple lines for longer hook names.
+	 *
+	 * @param hook {string} Hook name.
+	 * @returns {string}
+	 */
 	renderHook( hook ) {
 		if ( hook.length <= 30 ) {
 			return hook;
@@ -435,6 +533,11 @@ class ActionsReport extends Component {
 		return pieces.join( '_' );
 	}
 
+	/**
+	 * Render a placeholder screen while waiting for data.
+	 *
+	 * @returns {JSX.Element}
+	 */
 	renderPlaceholder() {
 		const headers = this.getHeadersContent();
 		return (
@@ -450,6 +553,11 @@ class ActionsReport extends Component {
 		);
 	}
 
+	/**
+	 * Render the action table.
+	 *
+	 * @returns {JSX.Element}
+	 */
 	renderTable() {
 		const { query } = this.props;
 		const { perPage, totalRows } = this.state.pagination;
@@ -495,6 +603,11 @@ class ActionsReport extends Component {
 		);
 	}
 
+	/**
+	 * React calls `render` when components props change.
+	 *
+	 * @returns {JSX.Element}
+	 */
 	render() {
 		const { loading } = this.state;
 		const { path, query } = this.props;
