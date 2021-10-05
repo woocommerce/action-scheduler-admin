@@ -1,10 +1,10 @@
 <?php
 /**
 Plugin Name: Action Scheduler Admin
-Plugin URI: https://github.com/Prospress/action-scheduler-admin
+Plugin URI: https://github.com/woocommerce/action-scheduler-admin
 Version: 0.1.1
-Author: Prospress
-Author URI: https://prospress.com/
+Author: Automattic
+Author URI: https://woocommerce.com/
 Description: Scheduled Actions screen for the WooCommerce Admin Dashboard.
 
 Text Domain: action-scheduler-admin
