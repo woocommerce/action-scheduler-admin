@@ -35,7 +35,7 @@ class ActionsReport extends Component {
 	/**
 	 * Component constructor.
 	 *
-	 * @param props
+	 * @param props {object} Component properties.
 	 */
 	constructor( props ) {
 		super( props );
@@ -77,7 +77,7 @@ class ActionsReport extends Component {
 	/**
 	 * React runs `componentDidUpdate` when the app has changes in properties.
 	 *
-	 * @param prevProps Properties prior to the change.
+	 * @param prevProps {object} Properties prior to the change.
 	 */
 	componentDidUpdate( prevProps ) {
 		const prevQuery = prevProps.query;
@@ -96,7 +96,7 @@ class ActionsReport extends Component {
 	/**
 	 * Retrieve action data from the REST API endpoint.
 	 *
-	 * @param query Query object parameters as named key => value pairs
+	 * @param query {object} Query object parameters as named key => value pairs.
 	 */
 	fetchActionData( query ) {
 		var fullQuery = Object.assign( {
@@ -163,8 +163,8 @@ class ActionsReport extends Component {
 	/**
 	 * Call the API to process or cancel an action.
 	 *
-	 * @param actionId Id of the action
-	 * @param action Action to perform (process|cancel).
+	 * @param actionId {number} Id of the action.
+	 * @param action   {string} Action to perform (process|cancel).
 	 */
 	processAction( actionId, action ) {
 		apiFetch( {
@@ -182,7 +182,7 @@ class ActionsReport extends Component {
 	/**
 	 * Determine list of selected actions to process. Process those actions.
 	 *
-	 * @param action Action to perform (process|cancel).
+	 * @param action {string} Action to perform (process|cancel).
 	 */
 	processSelectedActions( action ) {
 		const { selectedRows } = this.state;
@@ -199,10 +199,10 @@ class ActionsReport extends Component {
 	}
 
 	/**
-	 * Update an actions status in the report table
+	 * Update an actions status in the report table.
 	 *
-	 * @param actionId The ID of the action.
-	 * @param status The new status of the action.
+	 * @param actionId {number} The ID of the action.
+	 * @param status   {string} The new status of the action.
 	 */
 	updateActionStatus( actionId, status ) {
 		const { actions } = this.state;
@@ -235,7 +235,7 @@ class ActionsReport extends Component {
 	/**
 	 * Determine whether an action is currently selected.
 	 *
-	 * @param i Action ID.
+	 * @param i {number} Action ID.
 	 * @returns {boolean}
 	 */
 	selectedIndex( i ) {
@@ -248,9 +248,9 @@ class ActionsReport extends Component {
 	}
 
 	/**
-	 * Determine whether all action are currently selected.
+	 * Determine whether all actions are currently selected.
 	 *
-	 * @returns {boolean|*}
+	 * @returns {boolean}
 	 */
 	selectedAll() {
 		const { enabledRows, selectedRows } = this.state;
@@ -263,7 +263,7 @@ class ActionsReport extends Component {
 	/**
 	 * Toggle the selection of a row.
 	 *
-	 * @param i Action ID.
+	 * @param i {number} Action ID.
 	 */
 	selectRow( i ) {
 		const { selectedRows } = this.state;
@@ -302,8 +302,8 @@ class ActionsReport extends Component {
 	/**
 	 * Get the checkbox control for an action row.
 	 *
-	 * @param i Action ID.
-	 * @param enabled Whether the checkbox should be enabled.
+	 * @param i       {number} Action ID.
+	 * @param enabled {boolean} Whether the checkbox should be enabled.
 	 * @returns {{display: JSX.Element, value: boolean}}
 	 */
 	getCheckbox( i, enabled ) {
@@ -484,7 +484,7 @@ class ActionsReport extends Component {
 	/**
 	 * Render an action's parameter list as an unordered list.
 	 *
-	 * @param parameters
+	 * @param parameters {[mixed]} Action parameter array.
 	 * @returns {JSX.Element|null}
 	 */
 	renderParameterList( parameters ) {
@@ -511,7 +511,7 @@ class ActionsReport extends Component {
 	/**
 	 * Render the hook parameter. Use multiple lines for longer hook names.
 	 *
-	 * @param hook Hook name.
+	 * @param hook {string} Hook name.
 	 * @returns {string}
 	 */
 	renderHook( hook ) {
