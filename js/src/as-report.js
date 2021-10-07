@@ -51,6 +51,7 @@ class ActionsReport extends Component {
 		this.getRowsContent = this.getRowsContent.bind( this );
 		this.getSummary = this.getSummary.bind( this );
 		this.getCheckbox = this.getCheckbox.bind( this );
+		this.isBusy = this.isBusy.bind( this );
 		this.onCancel = this.onCancel.bind( this );
 		this.onRun = this.onRun.bind( this );
 		this.processAction = this.processAction.bind( this );
@@ -60,7 +61,6 @@ class ActionsReport extends Component {
 		this.selectRow = this.selectRow.bind( this );
 		this.selectAllRows = this.selectAllRows.bind( this );
 		this.setBusy = this.setBusy.bind( this );
-		this.unsetBusy = this.unsetBusy.bind( this );
 		this.updateActionStatus = this.updateActionStatus.bind( this );
 	}
 
@@ -111,9 +111,10 @@ class ActionsReport extends Component {
 			fullQuery.status = '';
 		}
 
-		if ( ! this.setBusy() ) {
+		if ( this.isBusy() ) {
 			return;
 		}
+		this.setBusy( true );
 
 		apiFetch( { path: addQueryArgs( actionsEndpoint, fullQuery ) } ).then( response => {
 			var enabledRows = map( response.actions, action => {
@@ -132,31 +133,27 @@ class ActionsReport extends Component {
 				loading: false,
 			} );
 		} );
-		this.unsetBusy();
+		this.setBusy( false );
+	}
+
+	/**
+	 * Get the busy state flag indicating whether there is an api call in progress.
+	 *
+	 * @returns {boolean}
+	 */
+	isBusy() {
+		const { isBusy } = this.state;
+		return isBusy;
 	}
 
 	/**
 	 * Set the busy state flag indicating there is an api call in progress.
 	 *
-	 * @returns {boolean} Flag indicating whether it is safe to call the api.
+	 * @param busyState {boolean} Flag indicating whether the api is busy or not.
 	 */
-	setBusy() {
-		const { isBusy } = this.state;
-		if ( isBusy ) {
-			return false;
-		}
+	setBusy( busyState ) {
 		this.setState( {
-			isBusy: true,
-		} );
-		return true;
-	}
-
-	/**
-	 * Clear the busy state flag indicating there isn't an api call in progress.
-	 */
-	unsetBusy() {
-		this.setState( {
-			isBusy: false,
+			isBusy: !! busyState,
 		} );
 	}
 
@@ -189,13 +186,16 @@ class ActionsReport extends Component {
 		const actionIds = [ ...selectedRows ];
 		let actionId;
 
-		if ( this.setBusy() ) {
-			while ( actionIds.length > 0 ) {
-				actionId = actionIds.shift();
-				this.processAction( actionId, action );
-			}
+		if ( this.isBusy() ) {
+			return;
 		}
-		this.unsetBusy();
+
+		this.setBusy( true );
+		while ( actionIds.length > 0 ) {
+			actionId = actionIds.shift();
+			this.processAction( actionId, action );
+		}
+		this.setBusy( false );
 	}
 
 	/**
@@ -561,10 +561,10 @@ class ActionsReport extends Component {
 	renderTable() {
 		const { query } = this.props;
 		const { perPage, totalRows } = this.state.pagination;
-		const { isBusy, selectedRows } = this.state;
+		const { selectedRows } = this.state;
 
 		const rows = this.getRowsContent() || [];
-		const buttonsEnabled = ! isBusy && selectedRows && selectedRows.length;
+		const buttonsEnabled = ! this.isBusy() && selectedRows && selectedRows.length;
 		const headers = this.getHeadersContent();
 
 		return (
