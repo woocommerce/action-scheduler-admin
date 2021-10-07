@@ -171,7 +171,8 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 			'group'    => $request[ 'group' ],
 			'status'   => $request[ 'status' ],
 			'orderby'  => strtolower( $request[ 'orderby' ] ),
-			'order'  => strtolower( $request[ 'order' ] ),
+			'order'    => strtolower( $request[ 'order' ] ),
+			'search'   => $request['s'],
 		];
 
 		return $args;
