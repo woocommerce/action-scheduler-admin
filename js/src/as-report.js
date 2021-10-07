@@ -12,7 +12,7 @@ import { map } from 'lodash';
 /**
  * WooCommerce dependencies
  */
-import { Date, ReportFilters, TableCard, TablePlaceholder, TableSummary } from '@woocommerce/components';
+import { Date, ReportFilters, TableCard, TablePlaceholder, TableSummary, TextControl } from '@woocommerce/components';
 import { getQuery, onQueryChange } from '@woocommerce/navigation';
 import Currency from '@woocommerce/currency';
 
@@ -53,6 +53,7 @@ class ActionsReport extends Component {
 		this.getCheckbox = this.getCheckbox.bind( this );
 		this.onCancel = this.onCancel.bind( this );
 		this.onRun = this.onRun.bind( this );
+		this.onSearch = this.onSearch.bind( this );
 		this.processAction = this.processAction.bind( this );
 		this.processSelectedActions = this.processSelectedActions.bind( this );
 		this.selectedIndex = this.selectedIndex.bind( this );
@@ -230,6 +231,10 @@ class ActionsReport extends Component {
 	 */
 	onCancel() {
 		this.processSelectedActions( 'cancel' );
+	}
+
+	onSearch() {
+
 	}
 
 	/**
@@ -588,6 +593,14 @@ class ActionsReport extends Component {
 							onClick={ this.onCancel }
 							disabled={ ! buttonsEnabled }
 							variant={ 'secondary' }
+						/>
+					),
+					(
+						<TextControl
+							onChange={ this.onSearch }
+							value={ '' }
+							label={ 'Search' }
+
 						/>
 					),
 				] }
