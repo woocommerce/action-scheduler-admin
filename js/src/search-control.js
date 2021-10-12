@@ -22,15 +22,29 @@ class SearchControl extends Component {
      */
     constructor( props ) {
         super( props );
+
+        this.onKeyPress = this.onKeyPress.bind( this );
     }
 
     /**
-     * Render the search icon
+     * Render the search icon.
      */
     renderSearchIcon() {
         return (
             <GridIconSearch />
         );
+    }
+
+    /**
+     * Handle text box Enter key keypress.
+     *
+     * @param event {Event} Keypress event object.
+     */
+    onKeyPress( event ) {
+        const { onSearch } = this.props;
+        if ( event.key == 'Enter' ) {
+            onSearch();
+        }
     }
 
     /**
@@ -47,7 +61,8 @@ class SearchControl extends Component {
                     key={ 'search-string' }
                     label={ label }
                     value={ value }
-                    onChange = { onChange }
+                    onChange={ onChange }
+                    onKeyPress={ this.onKeyPress }
                     placeholder={ placeholder }
                 />
                 <Button
