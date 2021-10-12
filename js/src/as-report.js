@@ -182,8 +182,9 @@ class ActionsReport extends Component {
 	 * @param action {string} Action to perform (process|cancel).
 	 */
 	processSelectedActions( action ) {
-		const { selectedRows } = this.state;
+		const { enabledRows, selectedRows } = this.state;
 		const actionIds = [ ...selectedRows ];
+		let remainingRows = [ ...enabledRows ];
 		let actionId;
 
 		if ( this.isBusy() ) {
@@ -194,7 +195,11 @@ class ActionsReport extends Component {
 		while ( actionIds.length > 0 ) {
 			actionId = actionIds.shift();
 			this.processAction( actionId, action );
+			remainingRows = remainingRows.filter( id => id != actionId );
 		}
+		this.setState( {
+			enabledRows: remainingRows,
+		} );
 		this.setBusy( false );
 	}
 
@@ -313,7 +318,7 @@ class ActionsReport extends Component {
 				<CheckboxControl
 					onChange={ () => this.selectRow( i ) }
 					disabled={ ! enabled }
-					checked={ isChecked }
+					checked={ enabled && isChecked }
 				/>
 			),
 			value: false,
