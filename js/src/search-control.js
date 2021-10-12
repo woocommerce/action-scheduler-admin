@@ -5,6 +5,7 @@
 import { Component, Fragment } from '@wordpress/element';
 import { Button } from '@wordpress/components';
 import GridIconSearch from 'gridicons/dist/search';
+import PropTypes from 'prop-types';
 
 /**
  * WooCommerce dependencies
@@ -75,5 +76,28 @@ class SearchControl extends Component {
         );
     }
 }
+
+SearchControl.propTypes = {
+    /**
+     * If this property is added, a label will be generated using label property as the content.
+     */
+    label: PropTypes.string,
+    /**
+     * If this property is added, it will be used as the search text box placeholder.
+     */
+    label: PropTypes.string,
+    /**
+     * The current value of the input.
+     */
+    value: PropTypes.string.isRequired,
+    /**
+     * A function that receives the value of the text input.
+     */
+    onChange: PropTypes.func.isRequired,
+    /**
+     * A function that handles the search icon click event.
+     */
+    onSearch: PropTypes.func.isRequired,
+};
 
 export default SearchControl;
