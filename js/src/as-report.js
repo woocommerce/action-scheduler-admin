@@ -12,7 +12,7 @@ import { map } from 'lodash';
 /**
  * WooCommerce dependencies
  */
-import { Date, ReportFilters, TableCard, TablePlaceholder, TableSummary, TextControl } from '@woocommerce/components';
+import { Date, ReportFilters, TableCard, TablePlaceholder, TableSummary } from '@woocommerce/components';
 import { getQuery, onQueryChange, updateQueryString } from '@woocommerce/navigation';
 import Currency from '@woocommerce/currency';
 
@@ -642,7 +642,6 @@ class ActionsReport extends Component {
 							onChange={ this.onSearchChange }
 							onSearch={ this.onSearch }
 							value={ search }
-							label={ __( 'Search', 'action-scheduler-admin' ) }
 							placeholder={ __( 'hook, args, or claim ID', 'action-scheduler-admin' ) }
 						/>
 					),
