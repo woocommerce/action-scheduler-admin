@@ -5,12 +5,7 @@
 import { Component } from '@wordpress/element';
 import GridIconSearch from 'gridicons/dist/search';
 import PropTypes from 'prop-types';
-
-/**
- * WooCommerce dependencies
- */
-import { TextControl } from '@woocommerce/components';
-import {__} from "@wordpress/i18n";
+import { __ } from '@wordpress/i18n';
 
 /**
  * Action Scheduler admin screen component
@@ -70,20 +65,29 @@ class SearchControl extends Component {
                     <GridIconSearch
                         className={ 'woocommerce-select-control__control-icon' }
                         key={ 'search' }
-                        onClick={ !isBusy ? onSearch : null }
+                        onClick={ ! isBusy ? onSearch : null }
                     />
                     <div
                         className={ 'components-base-control__field' }
                     >
-                        <input
-                            className={ 'woocommerce-select-control__control-input' }
-                            key={ 'search-string' }
-                            label={ label }
-                            value={ value }
-                            onChange={ this.onChange }
-                            onKeyPress={ this.onKeyPress }
-                            placeholder={ placeholder }
-                        />
+                        <label>
+                            { !! label && (
+                            <span
+                                className={ 'screen-reader-text' }
+                            >
+                                { label }
+                            </span>
+                            ) }
+                            <input
+                                className={ 'woocommerce-select-control__control-input' }
+                                key={ 'search-string' }
+                                type={ 'search' }
+                                value={ value }
+                                onChange={ this.onChange }
+                                onKeyPress={ this.onKeyPress }
+                                placeholder={ placeholder }
+                            />
+                        </label>
                     </div>
                 </div>
             </div>
