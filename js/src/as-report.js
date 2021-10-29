@@ -13,13 +13,14 @@ import { map } from 'lodash';
  * WooCommerce dependencies
  */
 import { Date, ReportFilters, TableCard, TablePlaceholder, TableSummary } from '@woocommerce/components';
-import { getQuery, onQueryChange } from '@woocommerce/navigation';
+import { getQuery, onQueryChange, updateQueryString } from '@woocommerce/navigation';
 import Currency from '@woocommerce/currency';
 
 /**
  * Internal dependencies
  */
 import { statusFilters } from './config';
+import SearchControl from './search-control';
 
 /**
  * Set defaults
@@ -43,6 +44,7 @@ class ActionsReport extends Component {
 			actions: null,
 			loading: true,
 			isBusy: false,
+			search: '',
 		};
 		/**
 		 * Bind the handlers to this instance of the component.
@@ -54,6 +56,8 @@ class ActionsReport extends Component {
 		this.isBusy = this.isBusy.bind( this );
 		this.onCancel = this.onCancel.bind( this );
 		this.onRun = this.onRun.bind( this );
+		this.onSearch = this.onSearch.bind( this );
+		this.onSearchChange = this.onSearchChange.bind( this );
 		this.processAction = this.processAction.bind( this );
 		this.processSelectedActions = this.processSelectedActions.bind( this );
 		this.selectedIndex = this.selectedIndex.bind( this );
@@ -62,6 +66,7 @@ class ActionsReport extends Component {
 		this.selectAllRows = this.selectAllRows.bind( this );
 		this.setBusy = this.setBusy.bind( this );
 		this.updateActionStatus = this.updateActionStatus.bind( this );
+		this.updateSearchQuery = this.updateSearchQuery.bind( this );
 	}
 
 	/**
@@ -235,6 +240,42 @@ class ActionsReport extends Component {
 	 */
 	onCancel() {
 		this.processSelectedActions( 'cancel' );
+	}
+
+	/**
+	 * Search button click handler.
+	 */
+	onSearch() {
+		const { search } = this.state;
+
+		this.updateSearchQuery( search );
+	}
+
+	/**
+	 * Handler for search control search string changes.
+	 *
+	 * @param searchString {string} Search string.
+	 */
+	onSearchChange( searchString ) {
+		this.setState( {
+			search: searchString,
+		} );
+
+		if ( ! searchString.length ) {
+			this.updateSearchQuery( '' );
+		}
+	}
+
+	/**
+	 * Update the search property and URL query string.
+	 *
+	 * @param searchString {string} New search string.
+	 */
+	updateSearchQuery( searchString ) {
+		const query = this.props.query;
+
+		query.s = searchString;
+		updateQueryString( query );
 	}
 
 	/**
@@ -566,7 +607,7 @@ class ActionsReport extends Component {
 	renderTable() {
 		const { query } = this.props;
 		const { perPage, totalRows } = this.state.pagination;
-		const { selectedRows } = this.state;
+		const { selectedRows, search } = this.state;
 
 		const rows = this.getRowsContent() || [];
 		const buttonsEnabled = ! this.isBusy() && selectedRows && selectedRows.length;
@@ -593,6 +634,15 @@ class ActionsReport extends Component {
 							onClick={ this.onCancel }
 							disabled={ ! buttonsEnabled }
 							variant={ 'secondary' }
+						/>
+					),
+					(
+						<SearchControl
+							key={ 'action-search' }
+							onChange={ this.onSearchChange }
+							onSearch={ this.onSearch }
+							value={ search }
+							placeholder={ __( 'hook, args, or claim ID', 'action-scheduler-admin' ) }
 						/>
 					),
 				] }
