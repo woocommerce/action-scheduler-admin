@@ -11,6 +11,7 @@
     "clean": "rimraf ./dist",
     "prebuild": "npm run -s install-if-deps-outdated",
     "build": "npm run clean && npm run -s i18n && cross-env NODE_ENV=production webpack",
+    "build:zip": "bin/build-zip.sh",
     "start": "webpack --watch",
     "i18n:js": "cross-env NODE_ENV=production babel js -o /dev/null",
     "i18n:pot": "wp --allow-root i18n make-pot . languages/action-scheduler-admin.pot --include=\"js,includes\" --exclude=\"dist,node_modules\" --slug=action-scheduler-admin",
