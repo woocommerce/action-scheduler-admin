@@ -1,9 +1,9 @@
 {
   "name": "action-scheduler-admin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Action Scheduler extension for WooCommerce Admin",
   "main": "index.js",
-  "author": "Prospress",
+  "author": "Automattic",
   "License": "GPL-3.0",
   "scripts": {
     "install-if-deps-outdated": "node bin/install-if-deps-outdated.js",
