@@ -37,7 +37,6 @@
     "@wordpress/postcss-themes": "1.0.5",
     "ast-types": "0.13.2",
     "autoprefixer": "9.6.0",
-    "babel-core": "7.0.0-bridge.0",
     "babel-eslint": "10.0.2",
     "babel-loader": "8.0.6",
     "babel-plugin-transform-class-properties": "6.24.1",
@@ -48,7 +47,6 @@
     "copy-webpack-plugin": "5.0.3",
     "cross-env": "5.2.0",
     "css-loader": "3.0.0",
-    "deasync": "0.1.15",
     "deep-freeze": "0.0.1",
     "docsify-cli": "4.3.0",
     "eslint": "5.16.0",
@@ -65,7 +63,6 @@
     "lerna": "3.15.0",
     "locutus": "2.0.11",
     "mini-css-extract-plugin": "0.7.0",
-    "node-sass": "4.12.0",
     "node-watch": "0.6.2",
     "postcss-color-function": "4.1.0",
     "postcss-loader": "3.0.0",
@@ -87,7 +84,7 @@
     "url-loader": "1.1.2",
     "webpack": "4.35.3",
     "webpack-cli": "3.3.4",
-    "webpack-rtl-plugin": "github:yoavf/webpack-rtl-plugin#develop"
+    "webpack-rtl-plugin": "^2.0.0"
   },
   "dependencies": {
     "@woocommerce/components": "^7.1.0",
