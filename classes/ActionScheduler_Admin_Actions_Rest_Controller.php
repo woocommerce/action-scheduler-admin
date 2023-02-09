@@ -206,8 +206,7 @@ class ActionScheduler_Admin_Actions_Rest_Controller extends WP_REST_Controller {
 		];
 
 		try {
-			$timezone_string = get_option( 'timezone_string' );
-			$timezone = new DateTimeZone( empty( $timezone_string ) ? 'UTC' : $timezone_string );
+			$timezone = new DateTimeZone( wp_timezone_string() );
 		} catch ( Exception $e ) {
 			$timezone = false;
 		}
