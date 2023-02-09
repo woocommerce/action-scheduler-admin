@@ -12,8 +12,6 @@ const WebpackRTLPlugin = require( 'webpack-rtl-plugin' );
 /**
  * WordPress dependencies
  */
-const CustomTemplatedPathPlugin = require( '@wordpress/custom-templated-path-webpack-plugin' );
-
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 const externals = {
